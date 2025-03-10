@@ -10,6 +10,8 @@ public interface INode
 
     IEnumerable<INode> Children { get; }
 
+    IEnumerable<(string Name, object? Value)> Properties { get; }
+
     void AddChild(INode node);
 
     void UpdateReferences(Syn.INode syn, TryGet tryGet);

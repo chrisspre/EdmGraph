@@ -1,5 +1,5 @@
-﻿using EdmGraph.Syn;
-using Sem = EdmGraph.Sem;
+﻿using EdmGraph;
+using EdmGraph.Syn;
 
 
 var model = new Model
@@ -18,8 +18,11 @@ var model = new Model
                     Children = {
                         new Member
                         {
-                            Name = "memberName",
-                            Value = 0
+                            Name = "member1",
+                            Value = 1
+                        },new Member
+                        {
+                            Name = "member2",
                         }
                     }
                 },
@@ -51,18 +54,20 @@ var model = new Model
     }
 };
 
+Console.WriteLine("// syntactic model");
 model.Show();
+
 
 var semanticModel = model.BuildSemanticModel();
 
+Console.WriteLine("// syntactic model");
 semanticModel.Show();
 
 static class Ex
 {
     public static void Show(this INode node, string indent = "")
     {
-        // Console.WriteLine($"{indent}{node.GetType().Name} {node.Attributes.Format()}");
-        Console.WriteLine($"{indent}{node.GetType().Name} ");
+        Console.WriteLine($"{indent}{node.GetType().Name} {string.Join(", ", from p in node.Properties where p.Item2 is not null select $"{p.Item1}={p.Item2}")}");
         foreach (var child in node.Children)
         {
             Show(child, indent + "    ");
@@ -70,10 +75,9 @@ static class Ex
     }
 
 
-    public static void Show(this Sem.INode node, string indent = "")
+    public static void Show(this EdmGraph.Sem.INode node, string indent = "")
     {
-        // Console.WriteLine($"{indent}{node.GetType().Name} {node.Attributes.Format()}");
-        Console.WriteLine($"{indent}{node.GetType().Name} ");
+        Console.WriteLine($"{indent}{node.GetType().Name} {string.Join(", ", from p in node.Properties where p.Item2 is not null select $"{p.Item1}={p.Item2}")}");
         foreach (var child in node.Children)
         {
             Show(child, indent + "    ");

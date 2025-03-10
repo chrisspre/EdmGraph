@@ -10,8 +10,9 @@ public interface INode
     INode? Parent { get; internal set; }
 
     IEnumerable<INode> Children { get; }
-}
 
+    IEnumerable<(string Name, object? Value)> Properties { get; }
+}
 
 public class ChildElementCollection<TChild>(INode owner) : Collection<TChild>
     where TChild : INode

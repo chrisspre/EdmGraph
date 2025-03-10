@@ -59,9 +59,10 @@ public static class Generator
         writer.WriteLine("#endregion child  element interfaces");
 
 
-        // if (!syntactial)
+        // generate the interfaces for reference properties
         {
-            // generate the interfaces for reference properties
+
+
             foreach (var (type, prop, targets) in referencePropertyInterfaces)
             {
                 writer.WriteLine();
@@ -69,14 +70,29 @@ public static class Generator
                 writer.WriteLine($"/// Interface for model elements that can be referenced by {type}.{prop}");
                 writer.WriteLine($"/// Implemented by {string.Join(", ", targets)}");
                 writer.WriteLine($"/// </summary>");
-                writer.WriteLine($"public interface I{type}{prop} : INode {{}}");
+                writer.WriteLine($"public interface I{type}{prop} : INode {{");
+
+                var commonProperties = targets
+                     .Select(target => model[target].Properties.Where(p => p.Type is PropertyType.Primitive).AsEnumerable())
+                     .Aggregate((prev, next) => prev.Intersect(next).ToList());
+
+                foreach (var common in commonProperties)
+                {
+                    switch (common.Type)
+                    {
+                        case PropertyType.Primitive primitive:
+                            writer.WriteLine($"    {primitive.Type} {common.Name} {{ get; }}");
+                            break;
+                    }
+                }
+                writer.WriteLine($"}}");
             }
         }
 
         // generate the model element classes
         foreach (var (key, node) in model)
         {
-            var implements = (child2Parent.TryGetValue(node.Name, out var val) ? val : []);
+            var implements = child2Parent.TryGetValue(node.Name, out var val) ? val : [];
 
             writer.WriteLine();
             if (!syntactial && referencePropertyInterfaceLookup.TryGetValue(node.Name, out var targets))
@@ -105,6 +121,7 @@ public static class Generator
             #endregion
 
             #region Properties
+
             foreach (var property in node.Properties)
             {
                 var optionalSuffix = property.IsOptional ? "?" : "";
@@ -173,6 +190,24 @@ public static class Generator
                 writer.WriteLine();
                 writer.WriteLine($"    void INode.AddChild(Sem.INode node) => Children.Add(({childElementType})node);");
             }
+
+            writer.WriteLine();
+            writer.WriteLine($"    IEnumerable<(string, object?)> INode.Properties => [");
+
+            // IEnumerable<(string, object?)> INode.Properties => [
+            foreach (var prop in node.Properties)
+            {
+                switch (prop.Type)
+                {
+                    // case PropertyType.Reference:
+                    //     writer.WriteLine($"        ( \"{prop.Name}\", {prop.Name} ),");
+                    //     break;
+                    default:
+                        writer.WriteLine($"        ( \"{prop.Name}\", {prop.Name} ),");
+                        break;
+                }
+            }
+            writer.WriteLine($"    ]; ");
 
             writer.WriteLine($"}}");
         }

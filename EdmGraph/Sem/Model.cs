@@ -16,68 +16,72 @@ namespace EdmGraph.Sem;
 /// interface for all children of Model.
 /// implemented by <see cref="Schema"/>.
 /// </summary>
-public interface IModelChild : INode { }
+public interface IModelChild : INode {}
 
 /// <summary>
 /// interface for all children of Schema.
 /// implemented by <see cref="EnumType"/>, <see cref="ComplexType"/>, <see cref="PrimitiveType"/>, <see cref="Term"/>.
 /// </summary>
-public interface ISchemaChild : INode { }
+public interface ISchemaChild : INode {}
 
 /// <summary>
 /// interface for all children of EnumType.
 /// implemented by <see cref="Member"/>, <see cref="Annotation"/>.
 /// </summary>
-public interface IEnumTypeChild : INode { }
+public interface IEnumTypeChild : INode {}
 
 /// <summary>
 /// interface for all children of Member.
 /// implemented by <see cref="Annotation"/>.
 /// </summary>
-public interface IMemberChild : INode { }
+public interface IMemberChild : INode {}
 
 /// <summary>
 /// interface for all children of ComplexType.
 /// implemented by <see cref="Property"/>, <see cref="Annotation"/>.
 /// </summary>
-public interface IComplexTypeChild : INode { }
+public interface IComplexTypeChild : INode {}
 
 /// <summary>
 /// interface for all children of Property.
 /// implemented by <see cref="Annotation"/>.
 /// </summary>
-public interface IPropertyChild : INode { }
+public interface IPropertyChild : INode {}
 
 /// <summary>
 /// interface for all children of PrimitiveType.
 /// implemented by <see cref="Annotation"/>.
 /// </summary>
-public interface IPrimitiveTypeChild : INode { }
+public interface IPrimitiveTypeChild : INode {}
 
 /// <summary>
 /// interface for all children of Annotation.
 /// implemented by <see cref="Annotation"/>.
 /// </summary>
-public interface IAnnotationChild : INode { }
+public interface IAnnotationChild : INode {}
 
 /// <summary>
 /// interface for all children of Term.
 /// implemented by <see cref="Annotation"/>.
 /// </summary>
-public interface ITermChild : INode { }
+public interface ITermChild : INode {}
 #endregion child  element interfaces
 
 /// <summary>
 /// Interface for model elements that can be referenced by Property.Type
 /// Implemented by PrimitiveType, ComplexType, EnumType
 /// </summary>
-public interface IPropertyType : INode { }
+public interface IPropertyType : INode {
+    String Name { get; }
+}
 
 /// <summary>
 /// Interface for model elements that can be referenced by Term.Type
 /// Implemented by PrimitiveType, ComplexType
 /// </summary>
-public interface ITermType : INode { }
+public interface ITermType : INode {
+    String Name { get; }
+}
 
 public class Model : INode
 {
@@ -94,6 +98,9 @@ public class Model : INode
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IModelChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+    ]; 
 }
 
 public class Schema : INode, IModelChild
@@ -115,6 +122,11 @@ public class Schema : INode, IModelChild
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((ISchemaChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Namespace", Namespace ),
+        ( "Alias", Alias ),
+    ]; 
 }
 
 public class EnumType : INode, ISchemaChild, IPropertyType
@@ -138,6 +150,12 @@ public class EnumType : INode, ISchemaChild, IPropertyType
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IEnumTypeChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+        ( "IsFlags", IsFlags ),
+        ( "UnderlyingType", UnderlyingType ),
+    ]; 
 }
 
 public class Member : INode, IEnumTypeChild
@@ -159,6 +177,11 @@ public class Member : INode, IEnumTypeChild
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IMemberChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+        ( "Value", Value ),
+    ]; 
 }
 
 public class ComplexType : INode, ISchemaChild, IPropertyType, ITermType
@@ -184,6 +207,12 @@ public class ComplexType : INode, ISchemaChild, IPropertyType, ITermType
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IComplexTypeChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+        ( "Abstract", Abstract ),
+        ( "BaseType", BaseType ),
+    ]; 
 }
 
 public class Property : INode, IComplexTypeChild
@@ -213,6 +242,14 @@ public class Property : INode, IComplexTypeChild
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IPropertyChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+        ( "Type", Type ),
+        ( "Nullable", Nullable ),
+        ( "DefaultValue", DefaultValue ),
+        ( "IsCollection", IsCollection ),
+    ]; 
 }
 
 public class PrimitiveType : INode, ISchemaChild, IPropertyType, ITermType
@@ -232,6 +269,10 @@ public class PrimitiveType : INode, ISchemaChild, IPropertyType, ITermType
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IPrimitiveTypeChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+    ]; 
 }
 
 public class Annotation : INode, IEnumTypeChild, IMemberChild, IComplexTypeChild, IPropertyChild, IPrimitiveTypeChild, IAnnotationChild, ITermChild
@@ -253,6 +294,10 @@ public class Annotation : INode, IEnumTypeChild, IMemberChild, IComplexTypeChild
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((IAnnotationChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Term", Term ),
+    ]; 
 }
 
 public class Term : INode, ISchemaChild
@@ -280,4 +325,11 @@ public class Term : INode, ISchemaChild
     }
 
     void INode.AddChild(Sem.INode node) => Children.Add((ITermChild)node);
+
+    IEnumerable<(string, object?)> INode.Properties => [
+        ( "Name", Name ),
+        ( "Type", Type ),
+        ( "Qualifier", Qualifier ),
+        ( "AppliesTo", AppliesTo ),
+    ]; 
 }
