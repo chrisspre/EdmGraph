@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdmGraph", "EdmGraph\EdmGra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdmGraphCodeGenerator", "EdmGraphCodeGenerator\EdmGraphCodeGenerator.csproj", "{2AC37FE3-BF3D-4846-B277-F329C4449090}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "readerSpike", "readerSpike\readerSpike.csproj", "{AF9A4678-5934-4505-8319-DC15B682D59C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{2AC37FE3-BF3D-4846-B277-F329C4449090}.Release|x64.Build.0 = Release|Any CPU
 		{2AC37FE3-BF3D-4846-B277-F329C4449090}.Release|x86.ActiveCfg = Release|Any CPU
 		{2AC37FE3-BF3D-4846-B277-F329C4449090}.Release|x86.Build.0 = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|x64.Build.0 = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Debug|x86.Build.0 = Debug|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|x64.ActiveCfg = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|x64.Build.0 = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|x86.ActiveCfg = Release|Any CPU
+		{AF9A4678-5934-4505-8319-DC15B682D59C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
