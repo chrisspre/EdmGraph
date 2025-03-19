@@ -1,0 +1,131 @@
+StartElement { Name: Schema, Attributes: [Namespace: "ODataDemo"], LineInfo: (21, 6) }
+    StartElement { Name: EntityType, Attributes: [Name: "Product", HasStream: "true"], LineInfo: (22, 8) }
+        StartElement { Name: Key, LineInfo: (23, 10) }
+            StartElement { Name: PropertyRef, Attributes: [Name: "ID"], LineInfo: (24, 12) }
+            EndElement { LineInfo = (24, 12), Name = PropertyRef }
+        EndElement { LineInfo = (25, 11), Name = Key }
+        StartElement { Name: Property, Attributes: [Name: "ID", Type: "Edm.Int32", Nullable: "false"], LineInfo: (26, 10) }
+        EndElement { LineInfo = (26, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Description", Type: "Edm.String"], LineInfo: (27, 10) }
+            StartElement { Name: Annotation, Attributes: [Term: "Core.IsLanguageDependent"], LineInfo: (28, 12) }
+            EndElement { LineInfo = (28, 12), Name = Annotation }
+        EndElement { LineInfo = (30, 11), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "ReleaseDate", Type: "Edm.Date"], LineInfo: (32, 10) }
+        EndElement { LineInfo = (32, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "DiscontinuedDate", Type: "Edm.Date"], LineInfo: (33, 10) }
+        EndElement { LineInfo = (33, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Rating", Type: "Edm.Int32"], LineInfo: (34, 10) }
+        EndElement { LineInfo = (34, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Price", Type: "Edm.Decimal", Scale: "variable"], LineInfo: (35, 10) }
+            StartElement { Name: Annotation, Attributes: [Term: "Measures.ISOCurrency"], LineInfo: (36, 12) }
+                AnnotationExpression { LineInfo = (36, 12), Expression = Path { Value = Currency } }
+            EndElement { LineInfo = (36, 12), Name = Annotation }
+        EndElement { LineInfo = (38, 11), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Currency", Type: "Edm.String", MaxLength: "3"], LineInfo: (40, 10) }
+        EndElement { LineInfo = (40, 10), Name = Property }
+        StartElement { Name: NavigationProperty, Attributes: [Name: "Category", Type: "ODataDemo.Category", Nullable: "false", Partner: "Products"], LineInfo: (42, 10) }
+        EndElement { LineInfo = (42, 10), Name = NavigationProperty }
+        StartElement { Name: NavigationProperty, Attributes: [Name: "Supplier", Type: "ODataDemo.Supplier", Partner: "Products"], LineInfo: (46, 10) }
+        EndElement { LineInfo = (46, 10), Name = NavigationProperty }
+    EndElement { LineInfo = (49, 9), Name = EntityType }
+    StartElement { Name: EntityType, Attributes: [Name: "Category"], LineInfo: (50, 8) }
+        StartElement { Name: Key, LineInfo: (51, 10) }
+            StartElement { Name: PropertyRef, Attributes: [Name: "ID"], LineInfo: (52, 11) }
+            EndElement { LineInfo = (52, 11), Name = PropertyRef }
+        EndElement { LineInfo = (53, 11), Name = Key }
+        StartElement { Name: Property, Attributes: [Name: "ID", Type: "Edm.Int32", Nullable: "false"], LineInfo: (54, 10) }
+        EndElement { LineInfo = (54, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Name", Type: "Edm.String", Nullable: "false"], LineInfo: (55, 10) }
+            StartElement { Name: Annotation, Attributes: [Term: "Core.IsLanguageDependent"], LineInfo: (56, 12) }
+            EndElement { LineInfo = (56, 12), Name = Annotation }
+        EndElement { LineInfo = (58, 11), Name = Property }
+        StartElement { Name: NavigationProperty, Attributes: [Name: "Products", Partner: "Category", Type: "Collection(ODataDemo.Product)"], LineInfo: (60, 10) }
+            StartElement { Name: OnDelete, Attributes: [Action: "Cascade"], LineInfo: (63, 12) }
+            EndElement { LineInfo = (63, 12), Name = OnDelete }
+        EndElement { LineInfo = (65, 11), Name = NavigationProperty }
+    EndElement { LineInfo = (66, 9), Name = EntityType }
+    StartElement { Name: EntityType, Attributes: [Name: "Supplier"], LineInfo: (67, 8) }
+        StartElement { Name: Key, LineInfo: (68, 10) }
+            StartElement { Name: PropertyRef, Attributes: [Name: "ID"], LineInfo: (69, 12) }
+            EndElement { LineInfo = (69, 12), Name = PropertyRef }
+        EndElement { LineInfo = (70, 11), Name = Key }
+        StartElement { Name: Property, Attributes: [Name: "ID", Type: "Edm.String", Nullable: "false"], LineInfo: (71, 10) }
+        EndElement { LineInfo = (71, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Name", Type: "Edm.String"], LineInfo: (72, 10) }
+        EndElement { LineInfo = (72, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Address", Type: "ODataDemo.Address", Nullable: "false"], LineInfo: (73, 10) }
+        EndElement { LineInfo = (73, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Concurrency", Type: "Edm.Int32", Nullable: "false"], LineInfo: (74, 10) }
+        EndElement { LineInfo = (74, 10), Name = Property }
+        StartElement { Name: NavigationProperty, Attributes: [Name: "Products", Partner: "Supplier", Type: "Collection(ODataDemo.Product)"], LineInfo: (75, 10) }
+        EndElement { LineInfo = (75, 10), Name = NavigationProperty }
+    EndElement { LineInfo = (79, 9), Name = EntityType }
+    StartElement { Name: EntityType, Attributes: [Name: "Country"], LineInfo: (80, 8) }
+        StartElement { Name: Key, LineInfo: (82, 10) }
+            StartElement { Name: PropertyRef, Attributes: [Name: "Code"], LineInfo: (84, 12) }
+            EndElement { LineInfo = (84, 12), Name = PropertyRef }
+        EndElement { LineInfo = (86, 11), Name = Key }
+        StartElement { Name: Property, Attributes: [Name: "Code", Type: "Edm.String", MaxLength: "2", Nullable: "false"], LineInfo: (88, 10) }
+        EndElement { LineInfo = (88, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "Name", Type: "Edm.String"], LineInfo: (92, 10) }
+        EndElement { LineInfo = (92, 10), Name = Property }
+    EndElement { LineInfo = (94, 9), Name = EntityType }
+    StartElement { Name: ComplexType, Attributes: [Name: "Address"], LineInfo: (96, 8) }
+        StartElement { Name: Property, Attributes: [Name: "Street", Type: "Edm.String"], LineInfo: (97, 10) }
+        EndElement { LineInfo = (97, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "City", Type: "Edm.String"], LineInfo: (98, 10) }
+        EndElement { LineInfo = (98, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "State", Type: "Edm.String"], LineInfo: (99, 10) }
+        EndElement { LineInfo = (99, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "ZipCode", Type: "Edm.String"], LineInfo: (100, 10) }
+        EndElement { LineInfo = (100, 10), Name = Property }
+        StartElement { Name: Property, Attributes: [Name: "CountryName", Type: "Edm.String"], LineInfo: (101, 10) }
+        EndElement { LineInfo = (101, 10), Name = Property }
+        StartElement { Name: NavigationProperty, Attributes: [Name: "Country", Type: "ODataDemo.Country"], LineInfo: (102, 10) }
+            StartElement { Name: ReferentialConstraint, Attributes: [Property: "CountryName", ReferencedProperty: "Name"], LineInfo: (104, 12) }
+            EndElement { LineInfo = (104, 12), Name = ReferentialConstraint }
+        EndElement { LineInfo = (108, 11), Name = NavigationProperty }
+    EndElement { LineInfo = (110, 9), Name = ComplexType }
+    StartElement { Name: Function, Attributes: [Name: "ProductsByRating"], LineInfo: (111, 8) }
+        StartElement { Name: Parameter, Attributes: [Name: "Rating", Type: "Edm.Int32"], LineInfo: (112, 10) }
+        EndElement { LineInfo = (112, 10), Name = Parameter }
+        StartElement { Name: ReturnType, Attributes: [Type: "Collection(ODataDemo.Product)"], LineInfo: (114, 10) }
+        EndElement { LineInfo = (114, 10), Name = ReturnType }
+    EndElement { LineInfo = (115, 9), Name = Function }
+    StartElement { Name: EntityContainer, Attributes: [Name: "DemoService"], LineInfo: (116, 8) }
+        StartElement { Name: EntitySet, Attributes: [Name: "Products", EntityType: "ODataDemo.Product"], LineInfo: (117, 10) }
+            StartElement { Name: NavigationPropertyBinding, Attributes: [Path: "Category", Target: "Categories"], LineInfo: (118, 12) }
+            EndElement { LineInfo = (118, 12), Name = NavigationPropertyBinding }
+        EndElement { LineInfo = (120, 11), Name = EntitySet }
+        StartElement { Name: EntitySet, Attributes: [Name: "Categories", EntityType: "ODataDemo.Category"], LineInfo: (121, 10) }
+            StartElement { Name: NavigationPropertyBinding, Attributes: [Path: "Products", Target: "Products"], LineInfo: (122, 12) }
+            EndElement { LineInfo = (122, 12), Name = NavigationPropertyBinding }
+            StartElement { Name: Annotation, Attributes: [Term: "Core.Description"], LineInfo: (124, 12) }
+                AnnotationExpression { LineInfo = (124, 12), Expression = String { Value = Product Categories } }
+            EndElement { LineInfo = (124, 12), Name = Annotation }
+        EndElement { LineInfo = (126, 11), Name = EntitySet }
+        StartElement { Name: EntitySet, Attributes: [Name: "Suppliers", EntityType: "ODataDemo.Supplier"], LineInfo: (127, 10) }
+            StartElement { Name: NavigationPropertyBinding, Attributes: [Path: "Products", Target: "Products"], LineInfo: (128, 12) }
+            EndElement { LineInfo = (128, 12), Name = NavigationPropertyBinding }
+            StartElement { Name: NavigationPropertyBinding, Attributes: [Path: "Address/Country", Target: "Countries"], LineInfo: (130, 12) }
+            EndElement { LineInfo = (130, 12), Name = NavigationPropertyBinding }
+            StartElement { Name: Annotation, Attributes: [Term: "Core.OptimisticConcurrency"], LineInfo: (134, 12) }
+                StartElement { Name: Collection, LineInfo: (136, 14) }
+                    StartElement { Name: PropertyPath, LineInfo: (138, 16) }
+                    EndElement { LineInfo = (138, 42), Name = PropertyPath }
+                EndElement { LineInfo = (140, 15), Name = Collection }
+            EndElement { LineInfo = (142, 13), Name = Annotation }
+        EndElement { LineInfo = (144, 11), Name = EntitySet }
+        StartElement { Name: Singleton, Attributes: [Name: "MainSupplier", Type: "self.Supplier"], LineInfo: (145, 10) }
+            StartElement { Name: NavigationPropertyBinding, Attributes: [Path: "Products", Target: "Products"], LineInfo: (146, 12) }
+            EndElement { LineInfo = (146, 12), Name = NavigationPropertyBinding }
+            StartElement { Name: Annotation, Attributes: [Term: "Core.Description"], LineInfo: (148, 12) }
+                AnnotationExpression { LineInfo = (148, 12), Expression = String { Value = Primary Supplier } }
+            EndElement { LineInfo = (148, 12), Name = Annotation }
+        EndElement { LineInfo = (150, 11), Name = Singleton }
+        StartElement { Name: EntitySet, Attributes: [Name: "Countries", EntityType: "ODataDemo.Country"], LineInfo: (152, 10) }
+        EndElement { LineInfo = (152, 10), Name = EntitySet }
+        StartElement { Name: FunctionImport, Attributes: [Name: "ProductsByRating", EntitySet: "Products", Function: "ODataDemo.ProductsByRating"], LineInfo: (154, 10) }
+        EndElement { LineInfo = (154, 10), Name = FunctionImport }
+    EndElement { LineInfo = (157, 9), Name = EntityContainer }
+EndElement { LineInfo = (158, 7), Name = Schema }

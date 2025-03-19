@@ -1,0 +1,24 @@
+StartElement { Name: Schema, Attributes: [Namespace: "External.Annotations"], LineInfo: (15, 10) }
+    StartElement { Name: Annotations, Attributes: [Target: "ODataDemo.Supplier"], LineInfo: (17, 14) }
+        StartElement { Name: Annotation, Attributes: [Term: "Vocabulary1.EMail"], LineInfo: (18, 18) }
+            AnnotationExpression { LineInfo = (19, 22), Expression = Null { } }
+        EndElement { LineInfo = (20, 19), Name = Annotation }
+        StartElement { Name: Annotation, Attributes: [Term: "Vocabulary1.AccountID"], LineInfo: (21, 18) }
+            AnnotationExpression { LineInfo = (21, 18), Expression = Path { Value = ID } }
+        EndElement { LineInfo = (21, 18), Name = Annotation }
+        StartElement { Name: Annotation, Attributes: [Term: "Vocabulary1.Title"], LineInfo: (22, 18) }
+            AnnotationExpression { LineInfo = (22, 18), Expression = String { Value = Supplier Info } }
+        EndElement { LineInfo = (22, 18), Name = Annotation }
+        StartElement { Name: Annotation, Attributes: [Term: "Vocabulary1.DisplayName"], LineInfo: (23, 18) }
+            AnnotationExpression { LineInfo = (24, 22), Expression = {Expression Type=Apply Function="odata.concat" Arguments=[Path { Value = Name }, String { Value =  in  }, Path { Value = Address/CountryName }] } }
+        EndElement { LineInfo = (29, 19), Name = Annotation }
+    EndElement { LineInfo = (30, 15), Name = Annotations }
+    StartElement { Name: Annotations, Attributes: [Target: "ODataDemo.Product"], LineInfo: (31, 14) }
+        StartElement { Name: Annotation, Attributes: [Term: "Vocabulary1.Tags"], LineInfo: (33, 18) }
+            StartElement { Name: Collection, LineInfo: (35, 22) }
+                StartElement { Name: String, LineInfo: (37, 26) }
+                EndElement { LineInfo = (37, 45), Name = String }
+            EndElement { LineInfo = (39, 23), Name = Collection }
+        EndElement { LineInfo = (41, 19), Name = Annotation }
+    EndElement { LineInfo = (43, 15), Name = Annotations }
+EndElement { LineInfo = (45, 11), Name = Schema }
