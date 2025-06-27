@@ -7,8 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
+
+ <ItemGroup>
     <ProjectReference Include="..\EdmGraph\EdmGraph.csproj" />
   </ItemGroup>
-
+  
 </Project>

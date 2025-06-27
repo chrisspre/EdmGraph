@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>MermaidGen.Net</PackageId>
+    <Title>Mermaid Generation Library</Title>
+    <Description>A .NET library for generating Mermaid diagrams with zoom and pan functionality</Description>
+    <PackageTags>mermaid;diagrams;visualization;html</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="resources\*.html" />
+  </ItemGroup>
+
+</Project>

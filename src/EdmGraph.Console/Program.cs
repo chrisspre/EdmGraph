@@ -1,8 +1,8 @@
-using EdmGraph;
+using LabeledPropertyGraph.Net;
 
 namespace EdmGraph.Console;
 
-class Program
+static class Program
 {
     static void Main(string[] args)
     {
@@ -15,9 +15,11 @@ class Program
         System.Console.WriteLine();
         DemoGraphQueries();
 
+
+
         System.Console.WriteLine();
-        System.Console.WriteLine("Press any key to exit...");
-        System.Console.ReadKey();
+        // System.Console.WriteLine("Press any key to exit...");
+        // System.Console.ReadKey();
     }
 
     static void DemoBasicGraphOperations()
@@ -81,6 +83,10 @@ class Program
         {
             System.Console.WriteLine($"Alice's role: {role}");
         }
+
+
+
+        graph.WriteGraphToMermaidHtmlFile("graph.html");
     }
 
     static void DemoGraphTraversal()
@@ -104,19 +110,27 @@ class Program
 
         // Create relationships
         if (alice != null && bob != null)
+        {
             graph.TryCreateEdge("FOLLOWS", alice, bob, out _);
+        }
         if (alice != null && charlie != null)
+        {
             graph.TryCreateEdge("FOLLOWS", alice, charlie, out _);
+        }
         if (bob != null && diana != null)
+        {
             graph.TryCreateEdge("FOLLOWS", bob, diana, out _);
+        }
         if (alice != null && charlie != null)
+        {
             graph.TryCreateEdge("FRIENDS", alice, charlie, out _);
+        }
 
         // Demonstrate single-step traversal
         System.Console.WriteLine("Who does Alice follow?");
         if (alice != null)
         {
-            var aliceFollows = graph.TraverseOut(alice, "FOLLOWS");
+            var aliceFollows = alice.TraverseOut("FOLLOWS");
             foreach (var person in aliceFollows)
             {
                 if (person.TryGetProperty<string>("name", out var name))
@@ -129,7 +143,7 @@ class Program
         System.Console.WriteLine("Who follows Bob?");
         if (bob != null)
         {
-            var bobFollowers = graph.TraverseIn(bob, "FOLLOWS");
+            var bobFollowers = bob.TraverseIn("FOLLOWS");
             foreach (var person in bobFollowers)
             {
                 if (person.TryGetProperty<string>("name", out var name))
@@ -142,7 +156,7 @@ class Program
         System.Console.WriteLine("All of Alice's outgoing connections:");
         if (alice != null)
         {
-            var aliceConnections = graph.TraverseOut(alice);
+            var aliceConnections = alice.TraverseOut();
             foreach (var person in aliceConnections)
             {
                 if (person.TryGetProperty<string>("name", out var name))
@@ -175,11 +189,17 @@ class Program
 
         // Create some edges
         if (p1 != null && c1 != null)
+        {
             graph.TryCreateEdge("WORKS_AT", p1, c1, out _);
+        }
         if (p2 != null && c2 != null)
+        {
             graph.TryCreateEdge("WORKS_AT", p2, c2, out _);
+        }
         if (p1 != null && d1 != null)
+        {
             graph.TryCreateEdge("MANAGES", p1, d1, out _);
+        }
 
         var workRelations = graph.GetEdgesByLabel("WORKS_AT");
         System.Console.WriteLine($"Found {workRelations.Count()} work relationships");

@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EdmGraph</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Your Name</Authors>
-    <Description>A class library to load and inspect a in-memory model od an OData Edm model</Description>
+    <Title>EDM Graph Library</Title>
+    <Description>A .NET library for loading and inspecting in-memory models of OData EDM with graph capabilities</Description>
+    <PackageTags>odata;edm;graph;metadata;analysis</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LabeledPropertyGraph.Net\LabeledPropertyGraph.Net.csproj" />
+  </ItemGroup>
 
 </Project>

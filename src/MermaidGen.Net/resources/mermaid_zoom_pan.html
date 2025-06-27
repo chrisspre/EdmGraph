@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><!-- Title --></title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: none;
+            margin: 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 400;
+            text-shadow: none;
+        }
+
+        .controls {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border-bottom: 1px solid #cbd5e0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: #4a5568;
+            color: white;
+            border: 1px solid #2d3748;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #2d3748;
+        }
+
+        .btn:active {
+            background: #1a202c;
+        }
+
+        .diagram-container {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #cbd5e0;
+            margin: 0;
+            cursor: grab;
+        }
+
+        .diagram-container:active {
+            cursor: grabbing;
+        }
+
+        .diagram-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            transition: transform 0.1s ease-out;
+        }
+
+        .zoom-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(45, 55, 72, 0.9);
+            color: white;
+            padding: 6px 10px;
+            font-size: 12px;
+            z-index: 10;
+            border: 1px solid #2d3748;
+        }
+
+        .instructions {
+            padding: 15px 20px;
+            background: #f7fafc;
+            margin: 0;
+            border-left: 3px solid #4a5568;
+            flex-shrink: 0;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #2d3748;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><!-- Title --></h1>
+        </div>
+
+        <div class="diagram-container" id="diagramContainer">
+            <div class="zoom-info" id="zoomInfo">Zoom: 100%</div>
+            <div class="diagram-wrapper" id="diagramWrapper">
+                <div class="mermaid" id="mermaidDiagram">
+                    <!-- section: MermaidMarkup -->
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <!-- <button class="btn" onclick="zoomIn()">🔍+ Zoom In</button> -->
+            <!-- <button class="btn" onclick="zoomOut()">🔍- Zoom Out</button> -->
+            <button class="btn" onclick="resetView()">🎯 Reset View</button>
+            <button class="btn" onclick="fitToScreen()">📱 Fit to Screen</button>
+
+            <button class="btn" onclick="toggleLayoutDirection()">🔄 Toggle Layout Direction</button>
+        </div>
+
+        <!-- <div class="instructions">
+            <h3>How to Use:</h3>
+            <ul>
+                <li><strong>Zoom:</strong> Use the zoom buttons or mouse wheel to zoom in/out</li>
+                <li><strong>Pan:</strong> Click and drag to move the diagram around</li>
+                <li><strong>Reset:</strong> Click "Reset View" to return to original position and zoom</li>
+                <li><strong>Fit to Screen:</strong> Automatically adjust zoom to fit the entire diagram</li>
+            </ul>
+        </div> -->
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true
+            },
+
+        });
+
+        // Store original diagram markup
+        let originalDiagramMarkup = '';
+
+        // Zoom and pan variables
+        let currentZoom = 1;
+        let currentX = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        const diagramContainer = document.getElementById('diagramContainer');
+        const diagramWrapper = document.getElementById('diagramWrapper');
+        const zoomInfo = document.getElementById('zoomInfo');
+
+        // Update transform
+        function updateTransform() {
+            diagramWrapper.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+            zoomInfo.textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+        }
+
+        // Zoom functions
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom * 1.2, 3);
+            updateTransform();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom / 1.2, 0.1);
+            updateTransform();
+        }
+
+        function resetView() {
+            currentZoom = 1;
+            currentX = 0;
+            currentY = 0;
+            updateTransform();
+        }
+
+        function fitToScreen() {
+            const containerRect = diagramContainer.getBoundingClientRect();
+            const diagramRect = diagramWrapper.getBoundingClientRect();
+
+            // Use a smaller margin since we now have more space
+            const margin = 20;
+            const availableWidth = containerRect.width - (margin * 2);
+            const availableHeight = containerRect.height - (margin * 2);
+
+            const scaleX = availableWidth / diagramRect.width;
+            const scaleY = availableHeight / diagramRect.height;
+
+            // Choose the smaller scale to fit both dimensions
+            currentZoom = Math.min(scaleX, scaleY, 1);
+
+            // Center the diagram in the available space
+            currentX = (containerRect.width - diagramRect.width * currentZoom) / 2;
+            currentY = (containerRect.height - diagramRect.height * currentZoom) / 2;
+
+            function switchToTopDown() {
+                // Use the stored original markup
+                let diagramContent = originalDiagramMarkup;
+
+                // Toggle between LR and TD
+                if (diagramContent.includes('graph LR') || diagramContent.includes('flowchart LR')) {
+                    diagramContent = diagramContent.replace(/graph LR/g, 'graph TD').replace(/flowchart LR/g, 'flowchart TD');
+                } else if (diagramContent.includes('graph TD') || diagramContent.includes('flowchart TD')) {
+                    diagramContent = diagramContent.replace(/graph TD/g, 'graph LR').replace(/flowchart TD/g, 'flowchart LR');
+                } else {
+                    // If no direction specified, assume it needs TD
+                    diagramContent = diagramContent.replace(/graph(?!\s+(LR|TD|RL|BT))/g, 'graph TD')
+                        .replace(/flowchart(?!\s+(LR|TD|RL|BT))/g, 'flowchart TD');
+                }
+
+                // Update the stored markup
+                originalDiagramMarkup = diagramContent;
+
+                // Update the diagram
+                const mermaidDiv = document.getElementById('mermaidDiagram');
+                mermaidDiv.textContent = diagramContent;
+                mermaidDiv.removeAttribute('data-processed');
+
+                // Re-render the diagram
+                mermaid.run().then(() => {
+                    updateTransform();
+                    fitToScreen();
+                });
+            }
+            updateTransform();
+        }
+
+        // Store the original diagram markup before rendering
+        const mermaidDiv = document.getElementById('mermaidDiagram');
+        originalDiagramMarkup = mermaidDiv.textContent.trim();
+
+        function toggleLayoutDirection() {
+            // Use the stored original markup
+            let diagramContent = originalDiagramMarkup;
+
+            // Toggle between LR and TD
+            if (diagramContent.includes('graph LR') || diagramContent.includes('flowchart LR')) {
+                diagramContent = diagramContent.replace(/graph LR/g, 'graph TD').replace(/flowchart LR/g, 'flowchart TD');
+            } else if (diagramContent.includes('graph TD') || diagramContent.includes('flowchart TD')) {
+                diagramContent = diagramContent.replace(/graph TD/g, 'graph LR').replace(/flowchart TD/g, 'flowchart LR');
+            } else {
+                // If no direction specified, assume it needs TD
+                diagramContent = diagramContent.replace(/graph(?!\s+(LR|TD|RL|BT))/g, 'graph TD')
+                    .replace(/flowchart(?!\s+(LR|TD|RL|BT))/g, 'flowchart TD');
+            }
+
+            // Update the stored markup
+            originalDiagramMarkup = diagramContent;
+
+            // Update the diagram
+            const mermaidDiv = document.getElementById('mermaidDiagram');
+            mermaidDiv.textContent = diagramContent;
+            mermaidDiv.removeAttribute('data-processed');
+
+            // Re-render the diagram
+            mermaid.run().then(() => {
+                updateTransform();
+                fitToScreen();
+            });
+        }
+
+        // Mouse wheel zoom
+        diagramContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const rect = diagramContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const oldZoom = currentZoom;
+
+            if (e.deltaY < 0) {
+                currentZoom = Math.min(currentZoom * 1.1, 3);
+            } else {
+                currentZoom = Math.max(currentZoom / 1.1, 0.1);
+            }
+
+            // Zoom towards mouse position
+            const zoomRatio = currentZoom / oldZoom;
+            currentX = mouseX - (mouseX - currentX) * zoomRatio;
+            currentY = mouseY - (mouseY - currentY) * zoomRatio;
+
+            updateTransform();
+        });
+
+        // Mouse drag for panning
+        diagramContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+            diagramContainer.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
+                updateTransform();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            diagramContainer.style.cursor = 'grab';
+        });
+
+        // Touch support for mobile
+        let lastTouchDistance = 0;
+
+        diagramContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - currentX;
+                startY = e.touches[0].clientY - currentY;
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+            }
+        });
+
+        diagramContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+
+            if (e.touches.length === 1 && isDragging) {
+                currentX = e.touches[0].clientX - startX;
+                currentY = e.touches[0].clientY - startY;
+                updateTransform();
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+
+                if (lastTouchDistance > 0) {
+                    const zoomRatio = currentDistance / lastTouchDistance;
+                    currentZoom = Math.min(Math.max(currentZoom * zoomRatio, 0.1), 3);
+                    updateTransform();
+                }
+
+                lastTouchDistance = currentDistance;
+            }
+        });
+        // Store the original diagram markup before rendering
+        mermaidDiv = document.getElementById('mermaidDiagram');
+        originalDiagramMarkup = mermaidDiv.textContent.trim();
+
+        // Run Mermaid to render the diagram
+        mermaid.run().then(() => {
+            updateTransform();
+            fitToScreen();
+        });
+
+    </script>
+    mermaid.run().then(() => {
+    updateTransform();
+    fitToScreen();
+    });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>LabeledPropertyGraph.Net</PackageId>
+    <Title>Labeled Property Graph Library</Title>
+    <Description>A .NET library for creating and manipulating labeled property graphs with nodes and edges</Description>
+    <PackageTags>graph;property-graph;nodes;edges;traversal</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MermaidGen.Net\MermaidGen.Net.csproj" />
+  </ItemGroup>
+
+</Project>

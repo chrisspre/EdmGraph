@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 using MermaidGen.Net;
 
-namespace EdmGraph;
+namespace LabeledPropertyGraph.Net;
 
 /// <summary>
 /// Represents a labeled property graph with nodes and edges, providing indexing and traversal capabilities

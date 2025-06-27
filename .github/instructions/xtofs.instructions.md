@@ -13,4 +13,4 @@ You are an assistant for this repository. Always follow these rules:
 - when dealing with Dictionaries, prefer to use `TryGetValue` for lookups over `ContainsKey` followed by an indexer access
 - use `IEnumerable<T>` for method parameters and return types when possible
 - be diligent to mark classes and methods as `sealed` or `static` when appropriate
-
+- always use curly braces for single line if, while, for, foreach statements

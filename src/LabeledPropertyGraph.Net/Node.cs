@@ -1,4 +1,4 @@
-namespace EdmGraph;
+namespace LabeledPropertyGraph.Net;
 
 /// <summary>
 /// Represents a node in a labeled property graph with directional adjacency lists

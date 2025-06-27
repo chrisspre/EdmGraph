@@ -1,4 +1,4 @@
-namespace EdmGraph;
+namespace LabeledPropertyGraph.Net;
 
 /// <summary>
 /// Represents an edge in a labeled property graph

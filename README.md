@@ -29,27 +29,36 @@ dotnet run --project src/EdmGraph.Console
 ## Project Structure
 
 ```
-EdmGraph/
+YourRepo/
 ├── src/
-│   ├── EdmGraph/                    # Class library project
-│   │   └── EdmGraph.csproj          # Class library project file
-│   └── EdmGraph.Console/            # Console application project
-│       ├── Program.cs               # Console application entry point
-│       └── EdmGraph.Console.csproj  # Console project file
-├── EdmGraph.sln                     # Solution file
-├── .gitignore                       # Git ignore file
-├── LICENSE                          # MIT License
-└── README.md                        # This file
+│   ├── MermaidGen.Net/                      # Mermaid code generator for
+│   │   ├── MermaidGen.Net.csproj
+│   │   └── (source files)
+│   ├── LabeledPropertyGraph.Net/           # Labeled Property Graph implementation
+│   │   ├── LabeledPropertyGraph.Net.csproj
+│   │   └── (source files)
+│   └── EdmGraph/                           # Main EdmGraph library
+│       ├── EdmGraph.csproj
+│       └── (source files)
+├── tests/
+│   ├── MermaidGen.Net.Tests/
+│   ├── LabeledPropertyGraph.Net.Tests/
+│   └── EdmGraph.Tests/
+├── samples/
+│   └── EdmGraph.Console/                # Console application to demonstrate EdmGraph functionality    
+├── nuget.config
+├── Directory.Build.props
+
 ```
 
 ## Usage Examples
 
-### Calculator
+### EdmGraph
 
 ```csharp
 using EdmGraph;
 
-var graph = EdmGraph.FromXml("example_csdl.xml);
+var graph = EdmGraph.FromXml("example_csdl.xml");
 
 // list all `EnumType`'s
 foreach(var node in graph.Nodes.Where(node => node.Label == "EnumType")
