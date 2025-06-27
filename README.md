@@ -1,29 +1,25 @@
 # EdmGraph
 
 A .NET class library and tool to 
-    - inspect and traverse an OData EDM model as an in-memory graph
-    - load such an EDM model from CSDL XML
+
+- inspect and traverse an OData EDM model as an in-memory graph
+- load such an EDM model from CSDL XML
 
 ## Overview
 
 
-- **EdmGraph**: A class library containing reusable components
-- **EdmGraph.Console**: A console application that demonstrates the class library functionality
+- **EdmGraph**: A class library that loads and manipulates OData EDM models as in-memory graphs
+- **LabeledPropertyGraph.Net**: A library for working with labeled property graphs, is used by EdmGraph 
+- **MermaidGen.Net**: A library to generate Mermaid diagrams from in-memory graphs. used by LabeledPropertyGraph 
 
-## Features
-
-
-## Getting Started
-
-### Prerequisites
 
 
 ### Running the demo console app
 
 ```bash
 
-# Run the console application
-dotnet run --project src/EdmGraph.Console
+# Run the demo console application
+dotnet run --project samples/EdmGraph.Console
 ```
 
 ## Project Structure
@@ -32,22 +28,16 @@ dotnet run --project src/EdmGraph.Console
 YourRepo/
 ├── src/
 │   ├── MermaidGen.Net/                      # Mermaid code generator for
-│   │   ├── MermaidGen.Net.csproj
-│   │   └── (source files)
 │   ├── LabeledPropertyGraph.Net/           # Labeled Property Graph implementation
-│   │   ├── LabeledPropertyGraph.Net.csproj
-│   │   └── (source files)
 │   └── EdmGraph/                           # Main EdmGraph library
-│       ├── EdmGraph.csproj
-│       └── (source files)
+├── samples/
+│   └── EdmGraph.Console/                   # Console application to demonstrate EdmGraph functionality    
 ├── tests/
 │   ├── MermaidGen.Net.Tests/
 │   ├── LabeledPropertyGraph.Net.Tests/
 │   └── EdmGraph.Tests/
-├── samples/
-│   └── EdmGraph.Console/                # Console application to demonstrate EdmGraph functionality    
-├── nuget.config
-├── Directory.Build.props
+├── .gitignore
+└── ...
 
 ```
 
