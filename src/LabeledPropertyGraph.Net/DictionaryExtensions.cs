@@ -1,8 +1,13 @@
 namespace LabeledPropertyGraph.Net;
 
+/// <summary>
+/// Provides extension methods for working with dictionaries
+/// </summary>
 public static class DictionaryExtensions
 {
-    // This extension method allows appending values to a list in a dictionary, creating the list if it doesn't exist.
+    /// <summary>
+    /// Tries to append a value to a list in a dictionary, creating the list if it does not exist.
+    /// </summary>
     public static bool TryAppendValue<TKey, TValue>(this Dictionary<TKey, List<TValue>> dictionary, TKey key, TValue value)
         where TKey : notnull
     {

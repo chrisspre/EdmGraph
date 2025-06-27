@@ -25,7 +25,6 @@ dotnet run --project samples/EdmGraph.Console
 ## Project Structure
 
 ```
-YourRepo/
 ├── src/
 │   ├── MermaidGen.Net/                      # Mermaid code generator for
 │   ├── LabeledPropertyGraph.Net/           # Labeled Property Graph implementation
@@ -38,6 +37,8 @@ YourRepo/
 │   └── EdmGraph.Tests/
 ├── .gitignore
 └── ...
+```
+
 
 ```
 

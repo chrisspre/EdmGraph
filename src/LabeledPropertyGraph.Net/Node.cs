@@ -5,16 +5,41 @@ namespace LabeledPropertyGraph.Net;
 /// </summary>
 public record Node(string Label)
 {
+    /// <summary>
+    /// Gets the properties associated with this node
+    /// </summary>
     public Dictionary<string, object> Properties { get; init; } = [];
+
+    /// <summary>
+    /// Gets the list of outgoing edges from this node
+    /// </summary>
     public List<Edge> OutgoingEdges { get; init; } = [];
+
+    /// <summary>
+    /// Gets the list of incoming edges to this node
+    /// </summary>
     public List<Edge> IncomingEdges { get; init; } = [];
 
+
+    /// <summary>
+    /// Adds a property to this node
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public Node AddProperty(string key, object value)
     {
         Properties[key] = value;
         return this;
     }
 
+    /// <summary>
+    /// Tries to get a property value with the specified type
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool TryGetProperty<T>(string key, out T? value)
     {
         if (Properties.TryGetValue(key, out var obj) && obj is T typedValue)
@@ -25,7 +50,6 @@ public record Node(string Label)
         value = default;
         return false;
     }
-
 
 
     /// <summary>
@@ -60,6 +84,7 @@ public record Node(string Label)
         return IncomingEdges.Where(e => e.Label == edgeLabel).Select(e => e.Source);
     }
 
+    /// <inheridoc/>
     public override string ToString()
     {
         var properties = Properties.Count == 0 ? "" :
