@@ -8,7 +8,7 @@
     <PackageId>EdmGraph</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
     <Authors>Your Name</Authors>
-    <Description>A sample class library</Description>
+    <Description>A class library to load and inspect a in-memory model od an OData Edm model</Description>
   </PropertyGroup>
 
 </Project>
