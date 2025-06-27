@@ -16,7 +16,14 @@ public sealed class Graph
     private readonly Dictionary<string, List<Node>> _nodesByLabel = [];
     private readonly Dictionary<string, List<Edge>> _edgesByLabel = [];
 
+    /// <summary>
+    /// Gets all nodes in the graph
+    /// </summary>
     public IEnumerable<Node> Nodes => _nodes;
+
+    /// <summary>
+    /// Gets all edges in the graph 
+    /// </summary>
     public IEnumerable<Edge> Edges => _edges;
 
     /// <summary>
@@ -201,6 +208,10 @@ public sealed class Graph
     public (int NodeCount, int EdgeCount, int NodeLabels, int EdgeLabels) GetStatistics() =>
         (_nodes.Count, _edges.Count, _nodesByLabel.Count, _edgesByLabel.Count);
 
+    /// <summary>
+    /// Writes the graph as an interactive Mermaid HTML file with zoom and pan functionality
+    /// </summary>
+    /// <param name="outputPath"></param>
 
     public void WriteGraphToMermaidHtmlFile(string outputPath)
     {
