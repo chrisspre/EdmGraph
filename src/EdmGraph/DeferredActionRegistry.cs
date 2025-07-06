@@ -25,7 +25,7 @@ public class Priorities
     public const int Type = 2;
     public const int BaseType = 3;
     public const int PropertyRef = 4;
-    internal static int Partner;
+    public const int Partner = 5;
 }
 
 public class DeferredActionRegistry
