@@ -7,32 +7,56 @@ namespace EdmGraph;
 public interface IElementResolver
 {
     /// <summary>
-    /// Resolves an element by its full name.
+    /// Resolves an element by its full name relative to the root element.
     /// </summary>
     /// <param name="name">The full name (target path) of the element to resolve.</param>
     /// <returns>The resolved element, or null if not found.</returns>
-    T Resolve<T>(string name) where T : class, IEdmElement;
     T Resolve<T>(IEdmElement root, string name) where T : class, IEdmElement;
+
+    /// <summary>
+    /// Resolves an element by its full name relative to the model root (a DataService instance).
+    /// </summary>
+    T Resolve<T>(string name) where T : class, IEdmElement;
 }
 
-internal class DeferredActionRegistry
-{
-    private readonly List<Action<IElementResolver>> _actions = [];
 
-    public void Add<T>(T element, string name, Action<T, string, IElementResolver> action) where T : EdmElement
+public class Priorities
+{
+    public const int Type = 2;
+    public const int BaseType = 3;
+    public const int PropertyRef = 4;
+    internal static int Partner;
+}
+
+public class DeferredActionRegistry
+{
+    /// <summary>
+    /// A priority queue to store actions that will be applied later.
+    /// this is strictly not necessary, since all actions get enqueued before anything is dequeued, 
+    /// but PriorityQueue is available in .NET 6+ and provides a convenient way to manage the order of actions.
+    /// </summary>
+    private readonly PriorityQueue<Action<IElementResolver>, int> _actions = new();
+
+
+    public void Add<T>(int priority, T element, string name, Action<T, string, IElementResolver> action) where T : EdmElement
     {
         // Register an action to be applied later
-        _actions.Add(resolver => action(element, name, resolver));
+        _actions.Enqueue(resolver => action(element, name, resolver), priority);
     }
 
     public void ApplyActions(DataServices model)
     {
         var resolver = new Resolver(model);
 
-        foreach (var action in _actions)
-        {
+        while(_actions.TryDequeue(out var action, out var _))
+        {        
             action(resolver);
         }
+    }
+
+    internal void Add(object propertyRef1, PropertyRef propertyRef2, string v, Action<PropertyRef, string, IElementResolver> value)
+    {
+        throw new NotImplementedException();
     }
 
     internal class Resolver(DataServices dataServices) : IElementResolver
@@ -101,19 +125,14 @@ public static class IResolverExtensions
         var prop = resolver.Resolve<IProperty>(current, segments[0]);
         var result = new PropertyPath(prop);
 
-        if(segments.Length > 1)
+        // iterate over the remaining segments and r
+        // esolve each property based on the previous one's type
+        for (int i = 1; i < segments.Length; i++)
         {
-            Log.Warning("Property path '{Path}' with more than one segment not yet supported.", path);
+            current = prop.Type;
+            prop = resolver.Resolve<Property>(current, segments[i]);
+            result.AddSegment(prop);
         }
-
-        // TODO fix order of deferred actions
-        // at this point, `prop.Type` is probably not resolved yet, so we cannot resolve the next segment.
-        // for (int i = 1; i < segments.Length; i++)
-        // {
-        //     current = prop.Type;
-        //     prop = resolver.Resolve<Property>(current, segments[i]);
-        //     result.AddSegment(prop);
-        // }
 
         return result;
     }

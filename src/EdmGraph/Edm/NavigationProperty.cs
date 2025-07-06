@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace EdmGraph.Edm;
 
 
@@ -7,7 +9,7 @@ namespace EdmGraph.Edm;
 public sealed class NavigationProperty(
     string Name,
     bool? Nullable = default,
-    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty
+    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator
 {
     private readonly List<ReferentialConstraint> _referentialConstraints = [];
     private readonly List<Annotation> _annotations = [];
@@ -59,12 +61,71 @@ public sealed class NavigationProperty(
     public bool ContainsTarget { get; } = ContainsTarget;
 
     IEdmPropertyType IProperty.Type => Type;
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var navigationProperty = new NavigationProperty(
+            startElement.Get("Name"),
+            startElement.ParseNullable<bool>("Nullable"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent))
+        {
+            switch (parent)
+            {
+                case EntityType entityType:
+                    entityType.AddNavigationProperty(navigationProperty);
+                    break;
+                case ComplexType complexType:
+                    complexType.AddNavigationProperty(navigationProperty);
+                    break;
+            }
+        }
+
+        // Add deferred action for Type property resolution
+        actions.Add(Priorities.Type, navigationProperty, startElement.Get("Type"), SetType);
+
+        // Add deferred action for Partner property resolution if Partner is not null
+        var partner = startElement.Get("Partner", null);
+        if (partner is not null)
+        {
+            actions.Add(Priorities.Partner, navigationProperty, partner, static (element, path, resolver) =>
+            {
+                if (element.Type is null)
+                {
+                    Log.Warning("NavigationProperty {element} has a Partner {path} but Type is not set yet.", element, path);
+                    return;
+                }
+                element.Partner = resolver.Resolve<NavigationProperty>(element.Type, path);
+                Log.Verbose("{element}'s Partner={path} resolved to {element.Partner}", element, path, element.Partner);
+            });
+        }
+
+        stack.Push(navigationProperty);
+
+        static void SetType(NavigationProperty element, string path, IElementResolver resolver)
+        {
+            if (path.StartsWith("Collection(") && path.EndsWith(')'))
+            {
+                path = path[11..^1]; // Remove "Collection(" and ")"
+                element.IsCollection = true;
+            }
+
+            element.Type = resolver.Resolve<EntityType>(path);
+            if (element.Type is null)
+            {
+                Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, element);
+            }
+        }
+    }
 }
 
 /// <summary>
 /// Represents a Referential Constraint on a Navigation Property
 /// </summary>
-public sealed class ReferentialConstraint() : EdmElement("ReferentialConstraint")
+public sealed class ReferentialConstraint() : EdmElement("ReferentialConstraint"), IEdmElementCreator
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -83,13 +144,27 @@ public sealed class ReferentialConstraint() : EdmElement("ReferentialConstraint"
         // ReferentialConstraint doesn't have additional basic properties beyond its name
         yield break;
     }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var referentialConstraint = new ReferentialConstraint()
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
+        {
+            navigationProperty.AddReferentialConstraint(referentialConstraint);
+        }
+
+        stack.Push(referentialConstraint);
+    }
 }
 
 /// <summary>
 /// Represents an On-Delete Action for a Navigation Property
 /// </summary>
-public sealed class OnDelete(
-    string Action) : EdmElement("OnDelete")
+public sealed class OnDelete(    string Action) : EdmElement("OnDelete"), IEdmElementCreator
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -109,5 +184,20 @@ public sealed class OnDelete(
     protected override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Action", Action);
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var onDelete = new OnDelete(startElement.Get("Action"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
+        {
+            navigationProperty.SetOnDelete(onDelete);
+        }
+
+        stack.Push(onDelete);
     }
 }

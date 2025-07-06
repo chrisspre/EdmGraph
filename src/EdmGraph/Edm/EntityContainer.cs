@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntityContainer(
     string Name,
-    string? Extends = null) : EdmElement(Name)
+    string? Extends = null) : EdmElement(Name), IEdmElementCreator
 {
     private readonly List<EntitySet> _entitySets = [];
     private readonly List<Singleton> _singletons = [];
@@ -24,9 +24,7 @@ public sealed class EntityContainer(
     public override string TargetPathSegment => $".{Name}";
     protected override EdmElement? Parent => ParentSchema;
 
-    public string?
-     Extends
-    { get; } = Extends;
+    public string? Extends { get; } = Extends;
 
     internal void AddEntitySet(EntitySet entitySet)
     {
@@ -70,5 +68,31 @@ public sealed class EntityContainer(
         {
             yield return ("Extends", Extends);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var entityContainer = new EntityContainer(
+            startElement.Get("Name"),
+            startElement.Get("Extends", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddEntityContainer(entityContainer);
+        }
+
+        // TODO: Add deferred action for Extends property resolution if Extends is not null
+        var extends = startElement.Get("Extends", null);
+        if (extends is not null)
+        {
+            // actions.Add(entityContainer, extends, static (element, path, resolver) => { 
+            //     element.Extends = resolver.Resolve<EntityContainer>(path);
+            // });
+        }
+
+        stack.Push(entityContainer);
     }
 }

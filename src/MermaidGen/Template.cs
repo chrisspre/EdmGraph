@@ -15,7 +15,6 @@ public partial class Template() // Dictionary<string, TemplateValue> placeholder
         set => Placeholders[key] = value;
     }
 
-
     /// <summary>
     /// Expands the template by replacing simple placeholders and invoking methods for section placeholders.
     /// Accepts a file path for the template input and writes the output to another file.

@@ -6,13 +6,13 @@ namespace EdmGraph.Edm;
 public sealed class Singleton(
     string Name,
     string Type,
-    bool Nullable = false) : EdmElement(Name)
+    bool Nullable = false) : EdmElement(Name), IEdmElementCreator
 {
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
-    
+
     public EntityContainer? ParentEntityContainer { get; internal set; }
-    
+
     private readonly List<NavigationPropertyBinding> _navigationPropertyBindings = [];
     private readonly List<Annotation> _annotations = [];
 
@@ -27,7 +27,7 @@ public sealed class Singleton(
         _navigationPropertyBindings.Add(binding);
         binding.ParentElement = this;
     }
-    
+
     internal void AddAnnotation(Annotation annotation)
     {
         _annotations.Add(annotation);
@@ -41,5 +41,27 @@ public sealed class Singleton(
         yield return ("Name", TargetPath);
         yield return ("Type", Type);
         yield return ("Nullable", Nullable);
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var singleton = new Singleton(
+            startElement.Get("Name"),
+            startElement.Get("Type"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        {
+            entityContainer.AddSingleton(singleton);
+        }
+
+        // TODO: Add deferred action for Type property resolution
+        // actions.Add(singleton, startElement.Get("Type"), static (element, path, resolver) => { 
+        //     element.Type = resolver.Resolve<EntityType>(path);
+        // });
+
+        stack.Push(singleton);
     }
 }

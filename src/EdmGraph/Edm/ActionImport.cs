@@ -3,10 +3,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Action Import
 /// </summary>
-public sealed class ActionImport(
-    string Name,
-    string Action,
-    string? EntitySet = null) : EdmElement(Name)
+public sealed class ActionImport(    string Name,    string Action,    string? EntitySet = null) : EdmElement(Name), IEdmElementCreator
 {
     public EntityContainer? ParentEntityContainer { get; internal set; }
 
@@ -38,5 +35,37 @@ public sealed class ActionImport(
         {
             yield return ("EntitySet", EntitySet);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var actionImport = new ActionImport(
+            startElement.Get("Name"),
+            startElement.Get("Action"),
+            startElement.Get("EntitySet", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        {
+            entityContainer.AddActionImport(actionImport);
+        }
+
+        // TODO: Add deferred action for Action property resolution
+        // actions.Add(actionImport, startElement.Get("Action"), static (element, path, resolver) => { 
+        //     element.Action = resolver.Resolve<Action>(path);
+        // });
+
+        // TODO: Add deferred action for EntitySet property resolution if EntitySet is not null
+        var entitySet = startElement.Get("EntitySet", null);
+        if (entitySet is not null)
+        {
+            // actions.Add(actionImport, entitySet, static (element, path, resolver) => { 
+            //     element.EntitySet = resolver.Resolve<EntitySet>(path);
+            // });
+        }
+
+        stack.Push(actionImport);
     }
 }

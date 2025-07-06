@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class Schema(
     string Namespace,
-    string? Alias = null) : EdmElement(Namespace)
+    string? Alias = null) : EdmElement(Namespace), IEdmElementCreator
 {
     public string? Alias { get; } = Alias;
 
@@ -108,6 +108,23 @@ public sealed class Schema(
         {
             yield return ("Alias", Alias);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var schema = new Schema(
+            startElement.Get("Namespace"),
+            startElement.Get("Alias", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is DataServices dataServices)
+        {
+            dataServices.AddSchema(schema);
+        }
+
+        stack.Push(schema);
     }
 
 }

@@ -14,7 +14,7 @@ public sealed class Term(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name)
+    int? SRID = null) : EdmElement(Name), IEdmElementCreator
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -74,5 +74,40 @@ public sealed class Term(
         {
             yield return ("SRID", SRID.Value);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var term = new Term(
+            startElement.Get("Name"),
+            startElement.Get("Type"),
+            startElement.Get("BaseTerm", null),
+            startElement.Get("AppliesTo", null),
+            startElement.Get("DefaultValue", null),
+            startElement.Parse<bool>("Nullable", true))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddTerm(term);
+        }
+
+        // TODO: Add deferred action for Type property resolution
+        // actions.Add(term, startElement.Get("Type"), static (element, path, resolver) => { 
+        //     element.Type = resolver.Resolve<ITermType>(path);
+        // });
+
+        // TODO: Add deferred action for BaseTerm property resolution if BaseTerm is not null
+        var baseTerm = startElement.Get("BaseTerm", null);
+        if (baseTerm is not null)
+        {
+            // actions.Add(term, baseTerm, static (element, path, resolver) => { 
+            //     element.BaseTerm = resolver.Resolve<Term>(path);
+            // });
+        }
+
+        stack.Push(term);
     }
 }

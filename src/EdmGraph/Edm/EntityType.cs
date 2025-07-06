@@ -7,7 +7,7 @@ public sealed class EntityType(
     string Name,
     bool Abstract = false,
     bool OpenType = false,
-    bool HasStream = false) : EdmElement(Name), IEdmPropertyType
+    bool HasStream = false) : EdmElement(Name), IEdmPropertyType, IEdmElementCreator
 {
     public bool Abstract { get; } = Abstract;
     public bool OpenType { get; } = OpenType;
@@ -69,6 +69,34 @@ public sealed class EntityType(
         yield return ("OpenType", OpenType);
         yield return ("HasStream", HasStream);
     }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var entityType = new EntityType(
+            startElement.Get("Name"),
+            startElement.Parse<bool>("Abstract"),
+            startElement.Parse<bool>("OpenType"),
+            startElement.Parse<bool>("HasStream"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddEntityType(entityType);
+        }
+
+        stack.Push(entityType);
+
+        var baseType = startElement.Get("BaseType");
+        if (baseType is not null && !string.IsNullOrEmpty(baseType))
+        {
+            actions.Add(2, entityType, startElement.Get("BaseType"), static (element, path, resolver) =>
+            {
+                element.BaseType = resolver.Resolve<EntityType>(path);
+            });
+        }
+    }
 }
 
 /// <summary>
@@ -81,7 +109,7 @@ public interface IEntityTypeChildElement
 /// <summary>
 /// Represents an EDM Key for an Entity Type
 /// </summary>
-public sealed class Key() : EdmElement("Key")
+public sealed class Key() : EdmElement(""), IEdmElementCreator
 {
     private readonly List<PropertyRef> _propertyRefs = [];
 
@@ -108,6 +136,21 @@ public sealed class Key() : EdmElement("Key")
         // Key doesn't have additional basic properties beyond its name
         yield break;
     }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var key = new Key()
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is EntityType entityType)
+        {
+            entityType.SetKey(key);
+        }
+
+        stack.Push(key);
+    }
 }
 
 
@@ -115,7 +158,7 @@ public sealed class Key() : EdmElement("Key")
 /// <summary>
 /// Represents a Property Reference in a Key
 /// </summary>
-public sealed class PropertyRef(string? Alias = null) : EdmElement(null!)
+public sealed class PropertyRef(string? Alias = null) : EdmElement(null!), IEdmElementCreator
 {
     public Key? ParentKey { get; internal set; }
 
@@ -129,9 +172,32 @@ public sealed class PropertyRef(string? Alias = null) : EdmElement(null!)
 
     protected override EdmElement? Parent => ParentKey;
 
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var propertyRef = new PropertyRef(startElement.Get("Alias"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Key key)
+        {
+            key.AddPropertyRef(propertyRef);
+        }
+
+        //  Add deferred action for property reference resolution
+        actions.Add(Priorities.PropertyRef, propertyRef, startElement.Get("Name"), static (element, path, resolver) =>
+        {
+            // PrepertyRef `Name` are resolved starting with the EntityType of the Key or the PropertyRef
+            var name = resolver.ResolvePropertyPath(element.ParentKey!.ParentEntityType!, path);
+
+            element.Name = name;
+        });
+
+        stack.Push(propertyRef);
+    }
+
     protected override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
         if (Alias != null)
         {
             yield return ("Alias", Alias);

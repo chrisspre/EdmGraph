@@ -1,10 +1,12 @@
+
+using Serilog;
+
 namespace EdmGraph.Edm;
 
 /// <summary>
 /// Represents an EDM Annotation
 /// </summary>
-public sealed class Annotation(
-    string? Qualifier = null) : EdmElement("Annotation")
+public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotation"), IEdmElementCreator
 {
     public Term Term { get; internal set; } = default!;
     
@@ -76,4 +78,78 @@ public sealed class Annotation(
         // }
     }
 
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var annotation = new Annotation(
+                startElement.Get("Qualifier", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        // Handle the most common parent types that support annotations
+        if (stack.TryPeek(out var parent))
+        {
+            switch (parent)
+            {
+                case EntityType et:
+                    et.AddAnnotation(annotation);
+                    break;
+                case ComplexType ct:
+                    ct.AddAnnotation(annotation);
+                    break;
+                case Property prop:
+                    prop.AddAnnotation(annotation);
+                    break;
+                case NavigationProperty nprop:
+                    nprop.AddAnnotation(annotation);
+                    break;
+                case EntitySet es:
+                    es.AddAnnotation(annotation);
+                    break;
+                case Singleton singleton:
+                    singleton.AddAnnotation(annotation);
+                    break;
+                case Function func:
+                    func.AddAnnotation(annotation);
+                    break;
+                case Action action:
+                    action.AddAnnotation(annotation);
+                    break;
+                case Parameter param:
+                    param.AddAnnotation(annotation);
+                    break;
+                case EnumType enumType:
+                    enumType.AddAnnotation(annotation);
+                    break;
+                case Member member:
+                    member.AddAnnotation(annotation);
+                    break;
+                case EntityContainer container:
+                    container.AddAnnotation(annotation);
+                    break;
+                case Annotations annotations:
+                    annotations.AddAnnotation(annotation);
+                    break;
+                case Reference reference:
+                    reference.AddAnnotation(annotation);
+                    break;
+                case DataServices dataServices:
+                    dataServices.AddAnnotation(annotation);
+                    break;
+                // Add more cases as needed
+                default:
+                    // If the parent type is not recognized
+                    Log.Warning($"Unhandled parent type {parent} for annotation {annotation}", parent, annotation);
+                    break;
+            }
+        }
+
+        // deferred action for Term property resolution
+        actions.Add(Priorities.Type, annotation, startElement.Get("Term"), static (element, path, resolver) =>
+        {
+            element.Term = resolver.Resolve<Term>(path);
+        });
+
+        stack.Push(annotation);
+    }
 }

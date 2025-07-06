@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace EdmGraph.Edm;
 
 /// <summary>
@@ -10,7 +12,7 @@ public sealed class Parameter(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name)
+    int? SRID = null) : EdmElement(Name), IEdmElementCreator
 {
     public IEdmPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
     public bool Nullable { get; } = Nullable;
@@ -53,6 +55,47 @@ public sealed class Parameter(
         if (SRID.HasValue)
         {
             yield return ("SRID", SRID.Value);
+        }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var parameter = new Parameter(
+            startElement.Get("Name"),
+            startElement.Parse<bool>("Nullable", true))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent))
+        {
+            switch (parent)
+            {
+                case Function function:
+                    function.AddParameter(parameter);
+                    break;
+                case Action action:
+                    action.AddParameter(parameter);
+                    break;
+            }
+        }
+
+        actions.Add(Priorities.Type, parameter, startElement.Get("Type"), SetType);
+        stack.Push(parameter);
+
+        // static helper method for the deferred action to set the Type property of Parameter
+        static void SetType(Parameter parameter, string path, IElementResolver resolver)
+        {
+            if (path.StartsWith("Collection(") && path.EndsWith(')'))
+            {
+                path = path[11..^1]; // Remove "Collection(" and ")"
+                // element.IsCollection = true;
+            }
+            parameter.Type = resolver.Resolve<IEdmPropertyType>(path);
+            if (parameter.Type is null)
+            {
+                Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, parameter);
+            }
         }
     }
 }

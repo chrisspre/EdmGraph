@@ -13,7 +13,7 @@ public sealed class Property(
     int? Precision = null,
     Scale Scale = default,
     int? SRID = null,
-    string? DefaultValue = null) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty
+    string? DefaultValue = null) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -52,5 +52,47 @@ public sealed class Property(
         if (SRID.HasValue) { yield return (nameof(SRID), SRID.Value); }
         if (DefaultValue != null) { yield return (nameof(DefaultValue), DefaultValue); }
     }
-}
 
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var property = new Property(
+            startElement.Get("Name"),
+            startElement.ParseNullable<bool>("Nullable"),
+            startElement.ParseNullable<int>("MaxLength"),
+            startElement.Parse<bool>("Unicode", true),
+            startElement.ParseNullable<int>("Precision"),
+            startElement.Parse<Scale>("Scale"),
+            startElement.ParseNullable<int>("SRID"),
+            startElement.Get("DefaultValue", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent))
+        {
+            switch (parent)
+            {
+                case EntityType entityType:
+                    entityType.AddProperty(property);
+                    break;
+                case ComplexType complexType:
+                    complexType.AddProperty(property);
+                    break;
+            }
+        }
+        actions.Add(Priorities.Type, property, startElement.Get("Type"), SetType);
+        stack.Push(property);
+
+        // static helper method for the deferred action to set the Type property of Property, NavigationProperty, Parameter, etc.
+        static void SetType(Property element, string path, IElementResolver resolver)
+        {
+            if (path.StartsWith("Collection(") && path.EndsWith(')'))
+            {
+                path = path[11..^1]; // Remove "Collection(" and ")"
+                element.IsCollection = true;
+            }
+
+            element.Type = resolver.Resolve<IEdmPropertyType>(path);
+        }
+    }
+}

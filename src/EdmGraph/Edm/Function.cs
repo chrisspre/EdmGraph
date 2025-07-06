@@ -7,7 +7,7 @@ public sealed class Function(
     string Name,
     bool IsBound = false,
     string? EntitySetPath = null,
-    bool IsComposable = false) : EdmElement(Name)
+    bool IsComposable = false) : EdmElement(Name), IEdmElementCreator
 {
     private readonly List<Parameter> _parameters = [];
     private readonly List<Annotation> _annotations = [];
@@ -53,5 +53,24 @@ public sealed class Function(
             yield return ("EntitySetPath", EntitySetPath);
         }
         yield return ("IsComposable", IsComposable);
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var function = new Function(
+            startElement.Get("Name"),
+            startElement.Parse<bool>("IsBound"),
+            startElement.Get("EntitySetPath", null),
+            startElement.Parse<bool>("IsComposable"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddFunction(function);
+        }
+
+        stack.Push(function);
     }
 }

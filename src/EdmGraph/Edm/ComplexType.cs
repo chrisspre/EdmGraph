@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 public sealed class ComplexType(
     string Name,
     bool Abstract = false,
-    bool OpenType = false) : EdmElement(Name), IEdmPropertyType
+    bool OpenType = false) : EdmElement(Name), IEdmPropertyType, IEdmElementCreator
 {
     private readonly List<Property> _properties = [];
     private readonly List<NavigationProperty> _navigationProperties = [];
@@ -51,6 +51,34 @@ public sealed class ComplexType(
     public ComplexType? BaseType { get; internal set; } 
     public bool Abstract { get; } = Abstract;
     public bool OpenType { get; } = OpenType;
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var complexType = new ComplexType(
+            startElement.Get("Name"),
+            startElement.Parse<bool>("Abstract"),
+            startElement.Parse<bool>("OpenType"))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddComplexType(complexType);
+        }
+
+        // Add deferred action for BaseType property resolution if BaseType is not null
+        var baseType = startElement.Get("BaseType", null);
+        if (baseType is not null)
+        {
+            actions.Add(Priorities.BaseType, complexType, baseType, static (element, path, resolver) =>
+            {
+                element.BaseType = resolver.Resolve<ComplexType>(path);
+            });
+        }
+
+        stack.Push(complexType);
+    }
 }
 
 /// <summary>

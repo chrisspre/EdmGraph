@@ -1,25 +1,8 @@
 namespace EdmGraph.Edm;
 
 
-
-
-
-public interface IEdmElement
-{
-    string Name { get; }
-   
-    string? TargetPath { get; }
-
-    EdmElement? Parent { get; }
-    
-    IReadOnlyCollection<EdmElement> Children { get; }
-
-    IEnumerable<(string, object?)> GetBasicProperties();
-}
-
-
 /// <summary>
-/// Base class for all EDM model elements
+/// Base class for all EDM model elements that support creation from CSDL tokens
 /// </summary>
 public abstract class EdmElement(string Name) : IEdmElement
 {
@@ -85,15 +68,6 @@ public abstract class EdmElement(string Name) : IEdmElement
 
 public static class EdmElementExtensions
 {
-    // public static bool TryFind(this DataServices model, string path, [MaybeNullWhen(false)] out EdmElement result)
-    // {
-    //     var segments = ParsePathSegments(path); 
-
-    //     var roots = model.Schemas;
-
-    //     return TryFind(roots, segments, 0, out result);
-    // }
-
     public static bool TryFind(this IEdmElement root, string path, [MaybeNullWhen(false)] out EdmElement result)
     {
         var segments = ParsePathSegments(path); 
@@ -112,7 +86,7 @@ public static class EdmElementExtensions
     ///  - "graph/user" into ["graph", "user"]<br/>
     ///  - "microsoft.graph.managedAppRegistration/userId" into ["microsoft.graph", "managedAppRegistrationm", "userId"]<br/>
     /// </remarks>
-    public static List<string> ParsePathSegments(string path)
+    private static List<string> ParsePathSegments(string path)
     {
         var segments = new List<string>();
 

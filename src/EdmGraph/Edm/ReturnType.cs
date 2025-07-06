@@ -10,7 +10,7 @@ public sealed class ReturnType(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement("ReturnType")
+    int? SRID = null) : EdmElement("ReturnType"), IEdmElementCreator
 {
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
@@ -57,5 +57,27 @@ public sealed class ReturnType(
         {
             yield return ("SRID", SRID.Value);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var returnType = new ReturnType(
+            startElement.Get("Type"),
+            startElement.Parse<bool>("Nullable", true))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Function function)
+        {
+            function.SetReturnType(returnType);
+        }
+
+        // TODO: Add deferred action for Type property resolution
+        // actions.Add(returnType, startElement.Get("Type"), static (element, path, resolver) => { 
+        //     element.Type = resolver.Resolve<IReturnType>(path);
+        // });
+
+        stack.Push(returnType);
     }
 }

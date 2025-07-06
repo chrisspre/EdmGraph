@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace EdmGraph.Edm;
 
 /// <summary>
@@ -10,7 +12,7 @@ public sealed class TypeDefinition(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name)
+    int? SRID = null) : EdmElement(Name), IEdmElementCreator
 {
     public string UnderlyingType { get; } = UnderlyingType;
     public int? MaxLength { get; } = MaxLength;
@@ -52,5 +54,41 @@ public sealed class TypeDefinition(
         {
             yield return ("SRID", SRID.Value);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var typeDefinition = new TypeDefinition(
+            startElement.Get("Name"),
+            startElement.Get("UnderlyingType"),
+            startElement.ParseNullable<int>("MaxLength"),
+            startElement.Parse<bool>("Unicode", true),
+            startElement.ParseNullable<int>("Precision"),
+            startElement.Get("Scale", null),
+            startElement.ParseNullable<int>("SRID")
+        )
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent))
+        {
+            switch (parent)
+            {
+                case Schema schema:
+                    schema.AddTypeDefinition(typeDefinition);
+                    break;
+                default:
+                    Log.Error("TypeDefinition {Name} can not be added to {parent}.", typeDefinition.Name, parent);
+                    break;
+            }
+        }
+
+        // TODO: Add deferred action for UnderlyingType property resolution
+        // actions.Add(typeDefinition, startElement.Get("UnderlyingType"), static (element, path, resolver) => { 
+        //     element.UnderlyingType = resolver.Resolve<IUnderlyingType>(path);
+        // });
+
+        stack.Push(typeDefinition);
     }
 }

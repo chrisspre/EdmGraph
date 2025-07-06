@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 public sealed class Action(
     string Name,
     bool IsBound = false,
-    string? EntitySetPath = null) : EdmElement(Name)
+    string? EntitySetPath = null) : EdmElement(Name), IEdmElementCreator
 {
     private readonly List<Parameter> _parameters = [];
     private readonly List<Annotation> _annotations = [];
@@ -46,5 +46,23 @@ public sealed class Action(
         {
             yield return ("EntitySetPath", EntitySetPath);
         }
+    }
+
+    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    {
+        var action = new Action(
+            startElement.Get("Name"),
+            startElement.Parse<bool>("IsBound"),
+            startElement.Get("EntitySetPath", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
+
+        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        {
+            schema.AddAction(action);
+        }
+
+        stack.Push(action);
     }
 }
