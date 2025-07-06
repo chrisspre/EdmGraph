@@ -1,7 +1,6 @@
 namespace EdmGraph.Edm;
 
 
-public interface IPropertyType : IEdmElement { }
 
 /// <summary>
 /// Represents an EDM Structural Property
@@ -14,7 +13,7 @@ public sealed class Property(
     int? Precision = null,
     Scale Scale = default,
     int? SRID = null,
-    string? DefaultValue = null) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement
+    string? DefaultValue = null) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -25,7 +24,7 @@ public sealed class Property(
 
     protected override EdmElement? Parent => ParentElement;
 
-    public IPropertyType Type { get; internal set; } = null!;
+    public IEdmPropertyType Type { get; internal set; } = null!;
 
     public bool? Nullable { get; } = Nullable;
     public int? MaxLength { get; } = MaxLength;

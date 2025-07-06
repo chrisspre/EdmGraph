@@ -4,7 +4,7 @@ using Serilog;
 namespace EdmGraph;
 
 
-internal interface IElementResolver
+public interface IElementResolver
 {
     /// <summary>
     /// Resolves an element by its full name.
@@ -12,7 +12,7 @@ internal interface IElementResolver
     /// <param name="name">The full name (target path) of the element to resolve.</param>
     /// <returns>The resolved element, or null if not found.</returns>
     T Resolve<T>(string name) where T : class, IEdmElement;
-    T Resolve<T>(EdmElement root, string name) where T : class, IEdmElement;
+    T Resolve<T>(IEdmElement root, string name) where T : class, IEdmElement;
 }
 
 internal class DeferredActionRegistry
@@ -69,7 +69,7 @@ internal class DeferredActionRegistry
             }
         }
 
-        public T Resolve<T>(EdmElement root, string name) where T : class, IEdmElement
+        public T Resolve<T>(IEdmElement root, string name) where T : class, IEdmElement
         {
             if (!root.TryFind(name, out var element))
             {
@@ -87,5 +87,34 @@ internal class DeferredActionRegistry
                 return default(T)!;
             }
         }
+    }
+}
+
+public static class IResolverExtensions
+{
+    public static PropertyPath ResolvePropertyPath(this IElementResolver resolver, IEdmElement element, string path)
+    {
+        var segments = path.Split('/');
+        // assert segments.Length >= 1;
+
+        var current = element;
+        var prop = resolver.Resolve<IProperty>(current, segments[0]);
+        var result = new PropertyPath(prop);
+
+        if(segments.Length > 1)
+        {
+            Log.Warning("Property path '{Path}' with more than one segment not yet supported.", path);
+        }
+
+        // TODO fix order of deferred actions
+        // at this point, `prop.Type` is probably not resolved yet, so we cannot resolve the next segment.
+        // for (int i = 1; i < segments.Length; i++)
+        // {
+        //     current = prop.Type;
+        //     prop = resolver.Resolve<Property>(current, segments[i]);
+        //     result.AddSegment(prop);
+        // }
+
+        return result;
     }
 }

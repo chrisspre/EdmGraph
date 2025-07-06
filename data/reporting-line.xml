@@ -1,0 +1,35 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+  xmlns="http://docs.oasis-open.org/odata/ns/edm" Version="4.0">
+  <edmx:Reference
+    Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+
+    <edmx:Include Namespace="Org.OData.Core.V1" Alias="Core">
+
+      <Annotation Term="Core.DefaultNamespace" />
+
+    </edmx:Include>
+
+  </edmx:Reference>
+
+  <edmx:DataServices>
+    <Schema Namespace="ReportingLineDemo" Alias="self">
+      <EntityType Name="Employee">
+        <Key>
+          <PropertyRef Name="Name" />
+        </Key>
+        <Property Name="Name" Type="Edm.String" Nullable="false" />
+      </EntityType>
+      <EntityType Name="ReportingLine">
+        <Key>
+          <PropertyRef Name="ReportsTo/Name" Alias="Manager" />
+          <PropertyRef Name="DirectReport/Name" Alias="Subordinate" />
+        </Key>
+        <NavigationProperty Name="ReportsTo" Type="self.Employee" />
+        <NavigationProperty Name="DirectReport" Type="self.Employee" />
+      </EntityType>
+      <EntityContainer Name="DemoService">
+        <EntitySet Name="ReportingLines" EntityType="ReportingLineDemo.ReportingLine" />
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

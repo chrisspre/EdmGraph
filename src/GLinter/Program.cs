@@ -11,8 +11,9 @@ class Program
     static void Main()
     {
         string[] paths = [
-            //@"D:\microsoft\TypedEdm\data\example89.xml",
-             @"D:\microsoft\TypedEdm\data\microsoft-graph.xml",
+            // @"data\example89.xml",
+            // @"data\microsoft-graph.xml",
+            @"data\reporting-line.xml",
         ];
 
 
@@ -92,7 +93,7 @@ class Program
 
         if (Debugger.IsAttached)
         {
-            Environment.CurrentDirectory = Path.Combine(@"..\..\", Environment.CurrentDirectory);
+            Environment.CurrentDirectory = Path.Combine(Environment.CurrentDirectory, @"..\..\..\..\.." );
         }
         if (!Directory.Exists("logs"))
         {

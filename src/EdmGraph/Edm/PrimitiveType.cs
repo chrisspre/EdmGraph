@@ -1,6 +1,6 @@
 namespace EdmGraph.Edm;
 
-public sealed class PrimitiveType(string Name) : EdmElement(Name), IPropertyType, IEdmElement
+public sealed class PrimitiveType(string Name) : EdmElement(Name), IEdmPropertyType, IEdmElement
 {
     public override string TargetPathSegment => $".{Name}";
 

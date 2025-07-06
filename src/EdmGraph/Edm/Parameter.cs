@@ -12,7 +12,7 @@ public sealed class Parameter(
     string? Scale = null,
     int? SRID = null) : EdmElement(Name)
 {
-    public IPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
+    public IEdmPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
     public bool Nullable { get; } = Nullable;
     public int? MaxLength { get; } = MaxLength;
     public bool Unicode { get; } = Unicode;

@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 public sealed class ComplexType(
     string Name,
     bool Abstract = false,
-    bool OpenType = false) : EdmElement(Name), IPropertyType
+    bool OpenType = false) : EdmElement(Name), IEdmPropertyType
 {
     private readonly List<Property> _properties = [];
     private readonly List<NavigationProperty> _navigationProperties = [];

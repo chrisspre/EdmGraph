@@ -23,7 +23,7 @@ public interface IEdmElement
 /// </summary>
 public abstract class EdmElement(string Name) : IEdmElement
 {
-    public string Name { get; } = Name;
+    public string Name { get; internal set;} = Name;
 
     /// <summary>
     /// Gets the target path segment for this element, including the appropriate separator
@@ -69,17 +69,16 @@ public abstract class EdmElement(string Name) : IEdmElement
 
     public  LineInfo LineInfo { get; init;}
 
+#region explicit IEdmElement implementation    
+    EdmElement? IEdmElement.Parent => Parent!;
 
-        #region explicit IEdmElement implementation    
-        EdmElement? IEdmElement.Parent => Parent!;
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties() => GetBasicProperties();
     
-        IEnumerable<(string, object?)> IEdmElement.GetBasicProperties() => GetBasicProperties();
-        
-        string IEdmElement.Name => throw new NotImplementedException();
-    
-        string? IEdmElement.TargetPath => throw new NotImplementedException();
-    
-        IReadOnlyCollection<EdmElement> IEdmElement.Children => throw new NotImplementedException();
+    string IEdmElement.Name => Name;
+
+    string? IEdmElement.TargetPath => TargetPath;
+
+    IReadOnlyCollection<EdmElement> IEdmElement.Children => Children;
 #endregion
 }
 
@@ -95,7 +94,7 @@ public static class EdmElementExtensions
     //     return TryFind(roots, segments, 0, out result);
     // }
 
-    public static bool TryFind(this EdmElement root, string path, [MaybeNullWhen(false)] out EdmElement result)
+    public static bool TryFind(this IEdmElement root, string path, [MaybeNullWhen(false)] out EdmElement result)
     {
         var segments = ParsePathSegments(path); 
 

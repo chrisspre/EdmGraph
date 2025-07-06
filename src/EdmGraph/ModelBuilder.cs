@@ -54,7 +54,7 @@ public static class ModelBuilder
                                 CreateKey(stack, startElement);
                                 break;
                             case "PropertyRef":
-                                CreatePropertyRef(stack, startElement);
+                                CreatePropertyRef(stack, actions, startElement);
                                 break;
                             case "EnumType":
                                 CreateEnumType(stack, startElement);
@@ -347,7 +347,7 @@ public static class ModelBuilder
             {
             }
 
-            element.Type = resolver.Resolve<IPropertyType>(path);
+            element.Type = resolver.Resolve<IEdmPropertyType>(path);
             // Log.Information("Resolved property type {path} for property {element} to {result}", path, element, element.Type);
         }
     }
@@ -430,9 +430,9 @@ public static class ModelBuilder
         stack.Push(key);
     }
 
-    private static void CreatePropertyRef(Stack<EdmElement> stack, CsdlToken.StartElement startElement)
+    private static void CreatePropertyRef(Stack<EdmElement> stack, DeferredActionRegistry actions, CsdlToken.StartElement startElement)
     {
-        var propertyRef = new PropertyRef(startElement.Get("Name"))
+        var propertyRef = new PropertyRef(startElement.Get("Alias"))
         {
             LineInfo = startElement.LineInfo
         };
@@ -442,11 +442,14 @@ public static class ModelBuilder
             key.AddPropertyRef(propertyRef);
         }
 
-        // TODO: Add deferred action for property reference resolution
-        // The Name should resolve to an actual Property in the parent EntityType
-        // actions.Add(propertyRef, startElement.Get("Name"), static (element, path, resolver) => { 
-        //     element.Property = resolver.Resolve<Property>(path);
-        // });
+        //  Add deferred action for property reference resolution
+        actions.Add(propertyRef, startElement.Get("Name"), static (element, path, resolver) =>
+        {
+            // PrepertyRef `Name` are resolved starting with the EntityType of the Key or the PropertyRef
+            var name = resolver.ResolvePropertyPath(element.ParentKey!.ParentEntityType!, path);
+
+            element.Name = name;
+        });
 
         stack.Push(propertyRef);
     }
@@ -598,7 +601,7 @@ public static class ModelBuilder
                 path = path[11..^1]; // Remove "Collection(" and ")"
                 // element.IsCollection = true;
             }
-            parameter.Type = resolver.Resolve<IPropertyType>(path);
+            parameter.Type = resolver.Resolve<IEdmPropertyType>(path);
             if (parameter.Type is null)
             {
                 Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, parameter);

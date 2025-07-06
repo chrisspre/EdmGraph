@@ -8,7 +8,7 @@ namespace EdmGraph.Edm;
 public sealed class EnumType(
     string Name,
     UnderlyingIntegerType UnderlyingType,
-    bool IsFlags = false) : EdmElement(Name), IPropertyType
+    bool IsFlags = false) : EdmElement(Name), IEdmPropertyType
 {
     public UnderlyingIntegerType UnderlyingType { get; } = UnderlyingType;
     public bool IsFlags { get; } = IsFlags;

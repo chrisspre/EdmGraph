@@ -1,12 +1,13 @@
 namespace EdmGraph.Edm;
 
+
 /// <summary>
 /// Represents an EDM Navigation Property
 /// </summary>
 public sealed class NavigationProperty(
     string Name,
     bool? Nullable = default,
-    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement
+    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty
 {
     private readonly List<ReferentialConstraint> _referentialConstraints = [];
     private readonly List<Annotation> _annotations = [];
@@ -56,6 +57,8 @@ public sealed class NavigationProperty(
     public bool? Nullable { get; } = Nullable;
     public NavigationProperty? Partner { get; internal set;} 
     public bool ContainsTarget { get; } = ContainsTarget;
+
+    IEdmPropertyType IProperty.Type => Type;
 }
 
 /// <summary>
