@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C3DCF06F-8C19-4063-A66B-A6067EA7A2A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdmGraph", "src\EdmGraph\EdmGraph.csproj", "{308A363E-1477-40A2-9CC7-3D3F0103D7E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLinter", "src\GLinter\GLinter.csproj", "{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MermaidGen", "src\MermaidGen\MermaidGen.csproj", "{AC164A59-B60A-4BA2-B5F5-53928FA2AC11}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{308A363E-1477-40A2-9CC7-3D3F0103D7E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308A363E-1477-40A2-9CC7-3D3F0103D7E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308A363E-1477-40A2-9CC7-3D3F0103D7E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308A363E-1477-40A2-9CC7-3D3F0103D7E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC164A59-B60A-4BA2-B5F5-53928FA2AC11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC164A59-B60A-4BA2-B5F5-53928FA2AC11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC164A59-B60A-4BA2-B5F5-53928FA2AC11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC164A59-B60A-4BA2-B5F5-53928FA2AC11}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{308A363E-1477-40A2-9CC7-3D3F0103D7E2} = {C3DCF06F-8C19-4063-A66B-A6067EA7A2A1}
+		{4EEDDA39-F83B-4E6C-96A9-C23684C0B14A} = {C3DCF06F-8C19-4063-A66B-A6067EA7A2A1}
+		{AC164A59-B60A-4BA2-B5F5-53928FA2AC11} = {C3DCF06F-8C19-4063-A66B-A6067EA7A2A1}
+	EndGlobalSection
+EndGlobal
