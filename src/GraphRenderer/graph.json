@@ -1,111 +1,215 @@
 {
-  "elements": {
-    "nodes": [
-      {
-        "data": {
-          "id": "a",
-          "label": "A"
-        }
-      },
-      {
-        "data": {
-          "id": "b",
-          "label": "B"
-        }
-      },
-      {
-        "data": {
-          "id": "c",
-          "label": "C"
-        }
-      },
-      {
-        "data": {
-          "id": "d",
-          "label": "D"
-        },
-        "classes": [
-          "foo",
-          "bar"
+    "elements": {
+        "nodes": [
+            {
+                "data": {
+                    "id": "n1",
+                    "label": "DataServices: DataServices"
+                }
+            },
+            {
+                "data": {
+                    "id": "n2",
+                    "label": "Schema: ReportingLineDemo"
+                }
+            },
+            {
+                "data": {
+                    "id": "n3",
+                    "label": "EntityType: Employee"
+                }
+            },
+            {
+                "data": {
+                    "id": "n4",
+                    "label": "Property: Name"
+                }
+            },
+            {
+                "data": {
+                    "id": "n5",
+                    "label": "Key"
+                }
+            },
+            {
+                "data": {
+                    "id": "n6",
+                    "label": "PropertyRef"
+                }
+            },
+            {
+                "data": {
+                    "id": "n7",
+                    "label": "EntityType: ReportingLine"
+                }
+            },
+            {
+                "data": {
+                    "id": "n8",
+                    "label": "NavigationProperty: ReportsTo"
+                }
+            },
+            {
+                "data": {
+                    "id": "n9",
+                    "label": "NavigationProperty: DirectReport"
+                }
+            },
+            {
+                "data": {
+                    "id": "n10",
+                    "label": "Key"
+                }
+            },
+            {
+                "data": {
+                    "id": "n11",
+                    "label": "PropertyRef"
+                }
+            },
+            {
+                "data": {
+                    "id": "n12",
+                    "label": "PropertyRef"
+                }
+            },
+            {
+                "data": {
+                    "id": "n13",
+                    "label": "EntityContainer: DemoService"
+                }
+            },
+            {
+                "data": {
+                    "id": "n14",
+                    "label": "EntitySet: ReportingLines"
+                }
+            }
+        ],
+        "edges": [
+            {
+                "data": {
+                    "source": "n1",
+                    "target": "n2"
+                }
+            },
+            {
+                "data": {
+                    "source": "n2",
+                    "target": "n3"
+                }
+            },
+            {
+                "data": {
+                    "source": "n3",
+                    "target": "n4"
+                }
+            },
+            {
+                "data": {
+                    "source": "n3",
+                    "target": "n5"
+                }
+            },
+            {
+                "data": {
+                    "source": "n5",
+                    "target": "n6"
+                }
+            },
+            {
+                "data": {
+                    "source": "n2",
+                    "target": "n7"
+                }
+            },
+            {
+                "data": {
+                    "source": "n7",
+                    "target": "n8"
+                }
+            },
+            {
+                "data": {
+                    "source": "n7",
+                    "target": "n9"
+                }
+            },
+            {
+                "data": {
+                    "source": "n7",
+                    "target": "n10"
+                }
+            },
+            {
+                "data": {
+                    "source": "n10",
+                    "target": "n11"
+                }
+            },
+            {
+                "data": {
+                    "source": "n10",
+                    "target": "n12"
+                }
+            },
+            {
+                "data": {
+                    "source": "n2",
+                    "target": "n13"
+                }
+            },
+            {
+                "data": {
+                    "source": "n13",
+                    "target": "n14"
+                }
+            }
         ]
-      },
-      {
-        "data": {
-          "id": "e",
-          "label": "E"
-        }
-      }
-    ],
-    "edges": [
-      {
-        "data": {
-          "source": "a",
-          "target": "b",
-          "label": "a to b"
-        }
-      },
-      {
-        "data": {
-          "source": "a",
-          "target": "c",
-          "label": "a to c"
-        }
-      },
-      {
-        "data": {
-          "source": "a",
-          "target": "d",
-          "label": "a to d"
-        }
-      },
-      {
-        "data": {
-          "source": "d",
-          "target": "e",
-          "label": "d to e"
-        }
-      }
-    ]
-  },
-  "style": [
-    {
-      "selector": "node",
-      "style": {
-        "shape": "round-rectangle",
-        "corner-radius": "20px",
-        "color": "#000",
-        "background-color": "#4a90e2",
-        "label": "data(label)",
-        "width": "5em",
-        "text-valign": "center",
-        "text-halign": "center"
-      }
     },
-    {
-      "selector": "edge",
-      "style": {
-        "width": 3,
-        "line-color": "#333",
-        "target-arrow-shape": "triangle",
-        "target-arrow-color": "#333",
-        "label": "data(label)",
-        "font-size": "12px",
-        "color": "#333",
-        "text-background-color": "#fff",
-        "text-background-opacity": 0.8,
-        "text-background-padding": "3px",
-        "curve-style": "bezier"
-      }
-    }
-  ],
-  "layout": {
-    "name": "breadthfirst",
-    "animate": true,
-    "animation-duration": 200,
-    "animation-easing": "ease-in-out",
-    "node-dimensions-include-labels": true,
-    "spacing-factor": 1.75,
-    "node-overlap": 10,
-    "gravity": 0.9
-  }
+    "layout":     {
+        "name": "breadthfirst",
+        "fit": true,
+        "animate": true,
+        "animationDuration": 200,
+        "animationEasing": "ease-in-out",
+        "nodeDimensionsIncludeLabels": true,
+        "nodeOverlap": 10,
+        "gravity": 0.30
+    },
+    "style":     [
+        {
+            "selector": "node",
+            "style": {
+                "shape": "round-rectangle",
+                "corner-radius": "20px",
+                "color": "#000",
+                "background-color": "#ddf",
+                "label": "data(label)",
+                "width": "label",
+                "height": "label",
+                "text-wrap": "wrap",
+                "text-max-width": "200px",
+                "padding": "15px", 
+                "text-valign": "center",
+                "text-halign": "center"
+            }
+        },
+        {
+            "selector": "edge",
+            "style": {
+                "width": 3,
+                "line-color": "#333",
+                "target-arrow-shape": "triangle",
+                "target-arrow-color": "#333",
+                "label": "data(label)",
+                "font-size": 24,
+                "color": "#333",
+                "text-background-color": "#fff",
+                "text-background-opacity": 0.8,
+                "text-background-padding": 3,
+                "curve-style": "bezier"
+            }
+        }
+    ]
 }

@@ -1,7 +1,30 @@
 
-namespace EdmGraph.Edm;
+namespace EdmGraph;
 
 using System.Linq.Expressions;
+using EdmGraph.Edm;
+
+public static class EdmElementExtensions
+{
+    public static IEnumerable<IEdmElement> DescendantsAndSelf(this IEdmElement element)
+    {
+        var stack = new Stack<IEdmElement>();
+        stack.Push(element);
+        
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            yield return current;
+            
+            foreach (var child in current.Children.Reverse())
+            {
+                stack.Push(child);
+            }
+        }
+    }
+
+   
+}
 
 public static class EdmElementFormattingExtensions
 {
