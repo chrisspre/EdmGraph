@@ -83,7 +83,6 @@ public sealed class ReturnType(
         //     element.Type = resolver.Resolve<IReturnType>(path);
         // });
 
-        stack.Push(returnType);
         return returnType;
     }
 }

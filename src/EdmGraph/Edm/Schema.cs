@@ -136,7 +136,6 @@ public sealed class Schema(
             dataServices.AddSchema(schema);
         }
 
-        stack.Push(schema);
         return schema;
     }
 

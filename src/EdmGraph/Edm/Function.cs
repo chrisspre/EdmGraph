@@ -101,7 +101,6 @@ public sealed class Function(
             }
         }
 
-        stack.Push(function);
         return function;
     }
 }

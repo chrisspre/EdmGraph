@@ -72,7 +72,6 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
             // });
         }
 
-        stack.Push(functionImport);
         return functionImport;
     }
 }

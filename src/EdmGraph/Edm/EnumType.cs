@@ -59,7 +59,6 @@ public sealed class EnumType(
             schema.AddEnumType(enumType);
         }
 
-        stack.Push(enumType);
         return enumType;
     }
 }
@@ -110,7 +109,6 @@ public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmE
             enumType.AddMember(member);
         }
 
-        stack.Push(member);
         return member;
     }
 }

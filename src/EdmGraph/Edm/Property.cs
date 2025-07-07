@@ -91,7 +91,6 @@ public sealed class Property(
             }
         }
         actions.Add(Priorities.Type, property, startElement.Get("Type"), SetTypeAction);
-        stack.Push(property);
         return property;
 
         // static helper method for the deferred action to set the Type property of Property, NavigationProperty, Parameter, etc.

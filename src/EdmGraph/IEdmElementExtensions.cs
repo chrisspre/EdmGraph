@@ -1,6 +1,5 @@
-namespace EdmGraph.Edm;
-
-using System.Diagnostics.CodeAnalysis;
+namespace EdmGraph;
+using EdmGraph.Edm;
 
 public static class IEdmElementExtensions
 {

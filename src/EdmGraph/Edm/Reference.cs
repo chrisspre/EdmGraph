@@ -67,7 +67,6 @@ public sealed class Reference(string Uri) : IEdmElement, IEdmElementCreator<Refe
             }
         }
 
-        stack.Push(reference);
         return reference;
     }
 }
@@ -122,7 +121,6 @@ public sealed class Include(string Namespace, string? Alias = null) : IEdmElemen
             reference.AddInclude(include);
         }
 
-        stack.Push(include);
         return include;
     }
 }
@@ -174,7 +172,6 @@ public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier =
             reference.AddIncludeAnnotations(includeAnnotations);
         }
 
-        stack.Push(includeAnnotations);
         return includeAnnotations;
     }
 }

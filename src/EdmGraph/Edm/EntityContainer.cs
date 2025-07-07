@@ -114,7 +114,6 @@ public sealed class EntityContainer(
             // });
         }
 
-        stack.Push(entityContainer);
         return entityContainer;
     }
 }

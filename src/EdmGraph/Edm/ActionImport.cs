@@ -68,7 +68,6 @@ public sealed class ActionImport(string Name, string Action, string? EntitySet =
             // });
         }
 
-        stack.Push(actionImport);
         return actionImport;
     }
 }

@@ -98,7 +98,6 @@ public sealed class Action(
             }
         }
 
-        stack.Push(action);
         return action;
     }
 }

@@ -95,7 +95,6 @@ public sealed class Parameter(
         }
 
         actions.Add(Priorities.Type, parameter, startElement.Get("Type"), SetTypeAction);
-        stack.Push(parameter);
         return parameter;
 
         // static helper method for the deferred action to set the Type property of Parameter

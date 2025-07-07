@@ -121,7 +121,6 @@ public sealed class Term(
             // });
         }
 
-        stack.Push(term);
         return term;
     }
 }

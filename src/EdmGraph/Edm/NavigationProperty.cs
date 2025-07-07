@@ -101,8 +101,6 @@ public sealed class NavigationProperty(
             });
         }
 
-        stack.Push(navigationProperty);
-
         return navigationProperty;
 
         static void SetTypeAction(NavigationProperty element, string path, IElementResolver resolver)
@@ -159,7 +157,6 @@ public sealed class ReferentialConstraint() : IEdmElement, IEdmElementCreator<Re
             navigationProperty.AddReferentialConstraint(referentialConstraint);
         }
 
-        stack.Push(referentialConstraint);
         return referentialConstraint;
     }
 }
@@ -203,7 +200,6 @@ public sealed class OnDelete(string Action) : IEdmElement, IEdmElementCreator<On
             navigationProperty.SetOnDelete(onDelete);
         }
 
-        stack.Push(onDelete);
         return onDelete;
     }
 }

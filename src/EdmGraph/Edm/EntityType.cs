@@ -115,8 +115,6 @@ public sealed class EntityType(
             }
         }
 
-        stack.Push(entityType);
-
         var baseType = startElement.Get("BaseType");
         if (baseType is not null && !string.IsNullOrEmpty(baseType))
         {
@@ -197,7 +195,6 @@ public sealed class Key() : IEdmElement, IEdmElementCreator<Key>
             }
         }
 
-        stack.Push(key);
         return key;
     }
 }
@@ -266,7 +263,6 @@ public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElement
             element.PropertyPath = name;
         });
 
-        stack.Push(propertyRef);
         return propertyRef;
     }
 }

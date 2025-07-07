@@ -33,125 +33,106 @@ public static class ModelBuilder
             {
                 case CsdlToken.StartElement startElement:
                     {
+                        IEdmElement? element = null;
+                        
                         switch (startElement.Name)
                         {
                             case "Schema":
-                                {
-                                    var element = Schema.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Schema.Create(startElement, stack, actions);
                                 break;
                             case "EntityType":
-                                {
-                                    var element = EntityType.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = EntityType.Create(startElement, stack, actions);
                                 break;
                             case "ComplexType":
-                                {
-                                    var element = ComplexType.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = ComplexType.Create(startElement, stack, actions);
                                 break;
                             case "Property":
-                                {
-                                    var element = Property.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Property.Create(startElement, stack, actions);
                                 break;
                             case "NavigationProperty":
-                                {
-                                    var element = NavigationProperty.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = NavigationProperty.Create(startElement, stack, actions);
                                 break;
-
                             case "Key":
-                                {
-                                    var element = Key.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Key.Create(startElement, stack, actions);
                                 break;
                             case "PropertyRef":
-                                PropertyRef.Create(startElement, stack, actions);
+                                element = PropertyRef.Create(startElement, stack, actions);
                                 break;
                             case "EnumType":
-                                EnumType.Create(startElement, stack, actions);
+                                element = EnumType.Create(startElement, stack, actions);
                                 break;
                             case "Member":
-                                Member.Create(startElement, stack, actions);
+                                element = Member.Create(startElement, stack, actions);
                                 break;
                             case "TypeDefinition":
-                                TypeDefinition.Create(startElement, stack, actions);
+                                element = TypeDefinition.Create(startElement, stack, actions);
                                 break;
                             case "Function":
-                                {
-                                    var element = Function.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Function.Create(startElement, stack, actions);
                                 break;
                             case "Action":
-                                {
-                                    var element = Action.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Action.Create(startElement, stack, actions);
                                 break;
                             case "Parameter":
-                                {
-                                    var element = Parameter.Create(startElement, stack, actions);
-                                    element.LineInfo = startElement.LineInfo;
-                                }
+                                element = Parameter.Create(startElement, stack, actions);
                                 break;
                             case "ReturnType":
-                                ReturnType.Create(startElement, stack, actions);
+                                element = ReturnType.Create(startElement, stack, actions);
                                 break;
                             case "EntityContainer":
-                                EntityContainer.Create(startElement, stack, actions);
+                                element = EntityContainer.Create(startElement, stack, actions);
                                 break;
                             case "EntitySet":
-                                EntitySet.Create(startElement, stack, actions);
+                                element = EntitySet.Create(startElement, stack, actions);
                                 break;
                             case "Singleton":
-                                Singleton.Create(startElement, stack, actions);
+                                element = Singleton.Create(startElement, stack, actions);
                                 break;
                             case "FunctionImport":
-                                FunctionImport.Create(startElement, stack, actions);
+                                element = FunctionImport.Create(startElement, stack, actions);
                                 break;
                             case "ActionImport":
-                                ActionImport.Create(startElement, stack, actions);
+                                element = ActionImport.Create(startElement, stack, actions);
                                 break;
                             case "NavigationPropertyBinding":
-                                NavigationPropertyBinding.Create(startElement, stack, actions);
+                                element = NavigationPropertyBinding.Create(startElement, stack, actions);
                                 break;
                             case "ReferentialConstraint":
-                                ReferentialConstraint.Create(startElement, stack, actions);
+                                element = ReferentialConstraint.Create(startElement, stack, actions);
                                 break;
                             case "OnDelete":
-                                OnDelete.Create(startElement, stack, actions);
+                                element = OnDelete.Create(startElement, stack, actions);
                                 break;
                             case "Term":
-                                Term.Create(startElement, stack, actions);
+                                element = Term.Create(startElement, stack, actions);
                                 break;
                             case "Annotations":
-                                Annotations.Create(startElement, stack, actions);
+                                element = Annotations.Create(startElement, stack, actions);
                                 break;
                             case "Annotation":
-                                Annotation.Create(startElement, stack, actions);
+                                element = Annotation.Create(startElement, stack, actions);
                                 break;
                             case "Reference":
-                                Reference.Create(startElement, stack, actions);
+                                element = Reference.Create(startElement, stack, actions);
                                 break;
                             case "Include":
-                                Include.Create(startElement, stack, actions);
+                                element = Include.Create(startElement, stack, actions);
                                 break;
                             case "IncludeAnnotations":
-                                IncludeAnnotations.Create(startElement, stack, actions);
+                                element = IncludeAnnotations.Create(startElement, stack, actions);
                                 break;
                             default:
                                 // For unhandled elements, we still need to track them for proper nesting
                                 // but we don't create actual objects for them
                                 Log.Warning("Unhandled start element: {ElementName}", startElement.Name);
                                 break;
+                        }
+
+                        // Set LineInfo and push to stack if an element was created
+                        if (element != null)
+                        {
+                            element.LineInfo = startElement.LineInfo;
+                            stack.Push(element);
                         }
 
                         break;

@@ -62,7 +62,6 @@ public sealed class NavigationPropertyBinding(string Path, string Target) : IEdm
         //     element.Target = resolver.Resolve<EntitySet>(path);
         // });
 
-        stack.Push(navigationPropertyBinding);
         return navigationPropertyBinding;
     }
 }

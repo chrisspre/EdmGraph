@@ -70,7 +70,6 @@ public sealed class EntitySet(
             element.EntityType = resolver.Resolve<EntityType>(path);
         });
 
-        stack.Push(entitySet);
         return entitySet;
     }
 }

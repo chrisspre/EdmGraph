@@ -169,7 +169,6 @@ public sealed class Annotation(string? Qualifier = null) : IEdmElement, IEdmElem
             element.Term = resolver.Resolve<Term>(path);
         });
 
-        stack.Push(annotation);
         return annotation;
     }
 }

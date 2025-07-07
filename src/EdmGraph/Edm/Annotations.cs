@@ -59,7 +59,6 @@ public sealed class Annotations(string Target, string? Qualifier = null) : IEdmE
         //     element.Target = resolver.Resolve<EdmElement>(path);
         // });
 
-        stack.Push(annotations);
         return annotations;
     }
 }

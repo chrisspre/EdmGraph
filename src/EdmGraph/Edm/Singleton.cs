@@ -84,7 +84,6 @@ public sealed class Singleton(
         //     element.Type = resolver.Resolve<EntityType>(path);
         // });
 
-        stack.Push(singleton);
         return singleton;
     }
 }

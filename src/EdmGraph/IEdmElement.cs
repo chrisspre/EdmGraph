@@ -1,4 +1,4 @@
-namespace EdmGraph.Edm;
+namespace EdmGraph;
 
 public interface IEdmElement
 {

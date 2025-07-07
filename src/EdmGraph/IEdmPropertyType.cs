@@ -1,6 +1,4 @@
-namespace EdmGraph.Edm;
-
-
+namespace EdmGraph;
 
 /// <summary>
 /// a non-empty sequence of property names that used to reference a chain of properties across structured types.

@@ -105,8 +105,7 @@ public sealed class TypeDefinition(
         // actions.Add(typeDefinition, startElement.Get("UnderlyingType"), static (element, path, resolver) => { 
         //     element.UnderlyingType = resolver.Resolve<IUnderlyingType>(path);
         // });
-
-        stack.Push(typeDefinition);
+                
         return typeDefinition;
     }
 }

@@ -85,7 +85,6 @@ public sealed class ComplexType(
         //     });
         // }
 
-        stack.Push(complexType);
         return complexType;
     }
 }
