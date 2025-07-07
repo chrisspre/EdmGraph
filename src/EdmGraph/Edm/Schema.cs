@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class Schema(
     string Namespace,
-    string? Alias = null) : EdmElement(Namespace), IEdmElementCreator
+    string? Alias = null) : IEdmElement, IEdmElementCreator<Schema>
 {
     public string? Alias { get; } = Alias;
 
@@ -33,8 +33,24 @@ public sealed class Schema(
 
     public DataServices? ParentDataServices { get; internal set; }
 
-    public override string TargetPathSegment => $"{Namespace}";
-    protected override EdmElement? Parent => ParentDataServices;
+    // IEdmElement implementation
+    public string Name { get; internal set; } = Namespace;
+
+    public string TargetPathSegment => $"{Namespace}";
+
+    public string? TargetPath
+    {
+        get
+        {
+            if (TargetPathSegment is null)
+            {
+                return null;
+            }
+            return Parent?.TargetPath + TargetPathSegment;
+        }
+    }
+
+    public IEdmElement? Parent => ParentDataServices;
 
     internal void AddEntityType(EntityType entityType) 
     {
@@ -89,19 +105,9 @@ public sealed class Schema(
         _annotations.Add(annotations);
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _entityTypes,
-        .. _complexTypes,
-        .. _enumTypes,
-        .. _typeDefinitions,
-        .. _terms,
-        .. _actions,
-        .. _functions,
-        .. _entityContainers,
-        .. _annotations
-    ];
+    public IReadOnlyCollection<IEdmElement> Children => [];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         if (Alias != null)
@@ -110,14 +116,20 @@ public sealed class Schema(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public LineInfo LineInfo { get; set; }
+
+    public override string ToString()
+    {
+        var properties = GetBasicProperties();
+        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
+        return $@"<{GetType().Name} {propertyString} \>";
+    }
+
+    public static Schema Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var schema = new Schema(
             startElement.Get("Namespace"),
-            startElement.Get("Alias", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Get("Alias", null));
 
         if (stack.TryPeek(out var parent) && parent is DataServices dataServices)
         {
@@ -125,6 +137,7 @@ public sealed class Schema(
         }
 
         stack.Push(schema);
+        return schema;
     }
 
 }

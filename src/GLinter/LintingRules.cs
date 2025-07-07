@@ -5,17 +5,17 @@ using EdmGraph.Edm;
 
 public static class LintingRules
 {
-    public static IEnumerable<string> FlagsEnumValuesMustBeAPowerOfTwo(EnumType element)
+    public static IEnumerable<string> FlagsEnumValuesMustBeAPowerOfTwo(EnumType enumType)
     {
-        if (!element.IsFlags)
+        if (!enumType.IsFlags)
         {
             yield break;
         }
         var invalidValues =
-              from member in element.Members
+              from member in enumType.Members
               let val = member.Value
               where val.HasValue && !(val.Value == 0 || System.Numerics.BitOperations.PopCount(val.Value) == 1)
-              select (member.Name, val);
+              select (((IEdmElement)member).Name, val);
 
         if (invalidValues.Any())
         {
@@ -45,11 +45,7 @@ public static class LintingRules
         {
             yield return "Collections Should not be nullable.";
         }
-
-        
     }
-
-    // Nullable enum should add an additional member,
     public static IEnumerable<string> PropertyTypeShouldNotBeANullableEnum(Property property)
     {
         if ((property.Nullable ?? false) && property.Type is EnumType enumType)
@@ -58,12 +54,22 @@ public static class LintingRules
         }
     }
 
+
+    public static IEnumerable<string> PropertyNameShouldNotHaveATypeNamePrefix(Property property)
+    {
+        var parentTypeName = property.ParentElement?.Name!;
+        if (property.Name.StartsWith(parentTypeName))
+        {
+            yield return $"Property name should not repeat parent's name\"{parentTypeName}\" as a prefix.";
+        }
+    }
+
     private static readonly HashSet<string> NamesToAvoidInsteadOfModifier = ["lastChangedBy", "lastUpdatedBy", "changedBy", "updatedBy", "lastChangedDateTime", "lastUpdatedDateTime"];
 
     public static IEnumerable<string> UseModifiedInsteadOfChangedOrUpdated(Property property)
     {
         var name = property.Name;
-        if(NamesToAvoidInsteadOfModifier.Contains(name))        
+        if (NamesToAvoidInsteadOfModifier.Contains(name))
         {
             var suggestion = name.ReplacePreservingCase("(changed|updated)", "modified");
             var message = $"Prefer 'modified' over `changed` or `updated` in name of property `{name}`. Suggestion: `{suggestion}`";
@@ -72,13 +78,12 @@ public static class LintingRules
     }
 
 
-
     private static readonly HashSet<string> NamesToAvoidInsteadOfCreated = ["creationDateTime", "createDateTime", "creationBy"];
 
     public static IEnumerable<string> UseCreatedInsteadOfCreateOrCreation(Property property)
     {
         var name = property.Name;
-        if ( NamesToAvoidInsteadOfCreated.Contains(name))
+        if (NamesToAvoidInsteadOfCreated.Contains(name))
         {
             var suggestion = name.ReplacePreservingCase(@"(create|creation)", "created");
             var message = $"Prefer `created` over `create` or `creation` in name of property {name}. Suggestion: '{suggestion}'.";

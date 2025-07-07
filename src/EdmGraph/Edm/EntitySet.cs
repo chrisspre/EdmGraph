@@ -5,11 +5,12 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntitySet(
     string Name,
-    string EntityType,
-    bool IncludeInServiceDocument = true) : EdmElement(Name), IEdmElementCreator
+    bool IncludeInServiceDocument = true) : IEdmElement, IEdmElementCreator<EntitySet>
 {
-    public string EntityType { get; } = EntityType;
     public bool IncludeInServiceDocument { get; } = IncludeInServiceDocument;
+
+
+    public EntityType EntityType { get; private set; } = default!; // Set by ModelBuilder
 
     public EntityContainer? ParentEntityContainer { get; internal set; }
 
@@ -18,9 +19,6 @@ public sealed class EntitySet(
 
     public IReadOnlyCollection<NavigationPropertyBinding> NavigationPropertyBindings => _navigationPropertyBindings;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-
-    public override string TargetPathSegment => $"/{Name}";
-    protected override EdmElement? Parent => ParentEntityContainer;
 
     internal void AddNavigationPropertyBinding(NavigationPropertyBinding binding)
     {
@@ -34,38 +32,45 @@ public sealed class EntitySet(
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    #region IEdmElement
+
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
+    string IEdmElement.TargetPathSegment => $"/{Name}";
+    LineInfo IEdmElement.LineInfo { get; set; } = new();
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         .. _navigationPropertyBindings,
         .. _annotations
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
         yield return ("EntityType", EntityType);
         yield return ("IncludeInServiceDocument", IncludeInServiceDocument);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static EntitySet Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var entitySet = new EntitySet(
            startElement.Get("Name"),
-           startElement.Get("EntityType"),
-           startElement.Parse<bool>("IncludeInServiceDocument", true))
-        {
-            LineInfo = startElement.LineInfo
-        };
+           
+           startElement.Parse<bool>("IncludeInServiceDocument", true));
 
         if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
         {
             entityContainer.AddEntitySet(entitySet);
         }
 
-        // TODO: Add deferred action for EntityType property resolution
-        // actions.Add(entitySet, startElement.Get("EntityType"), static (element, path, resolver) => { 
-        //     element.EntityType = resolver.Resolve<EntityType>(path);
-        // });
+        // Add deferred action for EntityType property resolution
+        var entityTypePath = startElement.Get("EntityType");
+        actions.Add(Priorities.Type, entitySet, entityTypePath, static (element, path, resolver) => { 
+            element.EntityType = resolver.Resolve<EntityType>(path);
+        });
 
         stack.Push(entitySet);
+        return entitySet;
     }
 }

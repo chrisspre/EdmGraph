@@ -7,7 +7,7 @@ static class MermaidGraph{
 
     public static void WriteGraph(DataServices root, string filePath, string title)
     {
-        var stack = new Stack<(int ParentIx, EdmElement Element)>();
+        var stack = new Stack<(int ParentIx, IEdmElement Element)>();
 
         foreach (var child in root.Children)
         {
@@ -54,10 +54,12 @@ static class MermaidGraph{
                 break;
 
             case ComplexType complexType:
-                if (complexType.BaseType is not null)
-                {
-                    links.Add(($"n{index[complexType]}", "BaseType", $"n{index[complexType.BaseType]}"));
-                }
+                // TODO: BaseType is a string reference, not a resolved object
+                // Will need deferred resolution to create these links
+                // if (complexType.BaseType is not null)
+                // {
+                //     links.Add(($"n{index[complexType]}", "BaseType", $"n{index[complexType.BaseType]}"));
+                // }
                 break;
 
             case Property property:
@@ -75,15 +77,17 @@ static class MermaidGraph{
                 break;
 
             case PropertyRef pref:
-                if (pref.Name is not null)
-                {
-                    foreach (var segment in pref.Name.Select((p, i) => (p, i)))
-                    {
-                        links.Add(($"n{index[pref]}", $"Key{segment.i + 1}", $"n{index[segment.p]}"));
-                        // TODO add link style for these key links: 
-                        // linkStyle 13,14,15,16,19 stroke - width:2px,stroke - dasharray: 7,2,3,2,7,2;
-                    }
-                }
+                // TODO: PropertyRef.Name is a string reference, not a resolved Property object
+                // Will need deferred resolution to create these links
+                // if (pref.Name is not null)
+                // {
+                //     foreach (var segment in pref.Name.Select((p, i) => (p, i)))
+                //     {
+                //         links.Add(($"n{index[pref]}", $"Key{segment.i + 1}", $"n{index[segment.p]}"));
+                //         // TODO add link style for these key links: 
+                //         // linkStyle 13,14,15,16,19 stroke - width:2px,stroke - dasharray: 7,2,3,2,7,2;
+                //     }
+                // }
                 break;
         }
     }

@@ -3,16 +3,13 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Action Import
 /// </summary>
-public sealed class ActionImport(    string Name,    string Action,    string? EntitySet = null) : EdmElement(Name), IEdmElementCreator
+public sealed class ActionImport(string Name, string Action, string? EntitySet = null) : IEdmElement, IEdmElementCreator<ActionImport>
 {
     public EntityContainer? ParentEntityContainer { get; internal set; }
 
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-
-    public override string TargetPathSegment => $"/{Name}";
-    protected override EdmElement? Parent => ParentEntityContainer;
 
     public string Action { get; } = Action;
     public string? EntitySet { get; } = EntitySet;
@@ -23,13 +20,19 @@ public sealed class ActionImport(    string Name,    string Action,    string? E
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    #region IEdmElement
+
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
+    string IEdmElement.TargetPathSegment => $"/{Name}";
+    LineInfo IEdmElement.LineInfo { get; set; } = new();
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         .. _annotations,
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
         yield return ("Action", Action);
         if (EntitySet != null)
         {
@@ -37,15 +40,14 @@ public sealed class ActionImport(    string Name,    string Action,    string? E
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static ActionImport Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var actionImport = new ActionImport(
             startElement.Get("Name"),
             startElement.Get("Action"),
-            startElement.Get("EntitySet", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Get("EntitySet", null));
 
         if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
         {
@@ -67,5 +69,6 @@ public sealed class ActionImport(    string Name,    string Action,    string? E
         }
 
         stack.Push(actionImport);
+        return actionImport;
     }
 }

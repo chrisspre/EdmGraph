@@ -5,9 +5,16 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class ComplexType(
     string Name,
-    bool Abstract = false,
-    bool OpenType = false) : EdmElement(Name), IEdmPropertyType, IEdmElementCreator
+    string? BaseType = null,
+    bool IsAbstract = false,
+    bool OpenType = false) : IEdmElement, IEdmPropertyType, IEdmElementCreator<ComplexType>
 {
+    public string? BaseType { get; } = BaseType;
+    public bool IsAbstract { get; } = IsAbstract;
+    public bool OpenType { get; } = OpenType;
+
+    public Schema? ParentSchema { get; internal set; }
+
     private readonly List<Property> _properties = [];
     private readonly List<NavigationProperty> _navigationProperties = [];
     private readonly List<Annotation> _annotations = [];
@@ -15,74 +22,76 @@ public sealed class ComplexType(
     public IReadOnlyCollection<Property> Properties => _properties;
     public IReadOnlyCollection<NavigationProperty> NavigationProperties => _navigationProperties;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    
-    public Schema? ParentSchema { get; internal set; }
 
-    public override string TargetPathSegment => $".{Name}";
-    protected override EdmElement? Parent => ParentSchema;
-
-    internal void AddProperty(Property property) 
+    internal void AddProperty(Property property)
     {
         property.ParentElement = this;
         _properties.Add(property);
     }
-    
-    internal void AddNavigationProperty(NavigationProperty navigationProperty) 
+
+    internal void AddNavigationProperty(NavigationProperty navigationProperty)
     {
         navigationProperty.ParentElement = this;
         _navigationProperties.Add(navigationProperty);
     }
-    
-    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    internal void AddAnnotation(Annotation annotation)
+    {
+        annotation.ParentElement = this;
+        _annotations.Add(annotation);
+    }
+
+    #region IEdmElement
+    public LineInfo LineInfo { get;  set; }
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentSchema;
+    string IEdmElement.TargetPathSegment => $".{Name}";
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         .. _properties,
         .. _navigationProperties,
         .. _annotations
     ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
-        yield return ("Abstract", Abstract);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
+        if (BaseType != null)
+        {
+            yield return ("BaseType", BaseType);
+        }
+        yield return ("IsAbstract", IsAbstract);
         yield return ("OpenType", OpenType);
     }
 
-    public ComplexType? BaseType { get; internal set; } 
-    public bool Abstract { get; } = Abstract;
-    public bool OpenType { get; } = OpenType;
+    #endregion
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public static ComplexType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var complexType = new ComplexType(
             startElement.Get("Name"),
-            startElement.Parse<bool>("Abstract"),
-            startElement.Parse<bool>("OpenType"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Get("BaseType", null),
+            startElement.Parse<bool>("Abstract", false),
+            startElement.Parse<bool>("OpenType", false));
 
         if (stack.TryPeek(out var parent) && parent is Schema schema)
         {
             schema.AddComplexType(complexType);
         }
 
-        // Add deferred action for BaseType property resolution if BaseType is not null
-        var baseType = startElement.Get("BaseType", null);
-        if (baseType is not null)
-        {
-            actions.Add(Priorities.BaseType, complexType, baseType, static (element, path, resolver) =>
-            {
-                element.BaseType = resolver.Resolve<ComplexType>(path);
-            });
-        }
+        // TODO: Add deferred action for BaseType property resolution
+        // if (complexType.BaseType != null)
+        // {
+        //     actions.Add(complexType, complexType.BaseType, static (element, path, resolver) => { 
+        //         element.BaseType = resolver.Resolve<ComplexType>(path);
+        //     });
+        // }
 
         stack.Push(complexType);
+        return complexType;
     }
 }
 
 /// <summary>
-/// Interface for elements that can be children of ComplexType
+/// Marker interface for elements that can be children of ComplexType
 /// </summary>
 public interface IComplexTypeChildElement
 {

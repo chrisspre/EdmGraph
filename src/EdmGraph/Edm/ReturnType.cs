@@ -10,7 +10,7 @@ public sealed class ReturnType(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement("ReturnType"), IEdmElementCreator
+    int? SRID = null) : IEdmElement, IEdmElementCreator<ReturnType>
 {
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
@@ -24,19 +24,25 @@ public sealed class ReturnType(
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public EdmElement? ParentElement { get; internal set; }
-
-    public override string TargetPathSegment => "/ReturnType";
-    protected override EdmElement? Parent => ParentElement;
+    public IEdmElement? ParentElement { get; internal set; }
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
+    #region IEdmElement
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    public LineInfo LineInfo { get; set; }
+
+    string? IEdmElement.Name => "ReturnType";
+
+    IEdmElement? IEdmElement.Parent => ParentElement;
+
+    string IEdmElement.TargetPathSegment => "/ReturnType";
+
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         .. _annotations,
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         yield return ("Type", Type);
         yield return ("Nullable", Nullable);
@@ -59,14 +65,13 @@ public sealed class ReturnType(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static ReturnType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var returnType = new ReturnType(
             startElement.Get("Type"),
-            startElement.Parse<bool>("Nullable", true))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Parse<bool>("Nullable", true));
 
         if (stack.TryPeek(out var parent) && parent is Function function)
         {
@@ -79,5 +84,6 @@ public sealed class ReturnType(
         // });
 
         stack.Push(returnType);
+        return returnType;
     }
 }

@@ -8,7 +8,7 @@ namespace EdmGraph.Edm;
 public sealed class EnumType(
     string Name,
     UnderlyingIntegerType UnderlyingType,
-    bool IsFlags = false) : EdmElement(Name), IEdmPropertyType, IEdmElementCreator
+    bool IsFlags = false) : IEdmElement, IEdmPropertyType, IEdmElementCreator<EnumType>
 {
     public UnderlyingIntegerType UnderlyingType { get; } = UnderlyingType;
     public bool IsFlags { get; } = IsFlags;
@@ -21,9 +21,6 @@ public sealed class EnumType(
 
     public Schema? ParentSchema { get; internal set; }
 
-    public override string TargetPathSegment => $".{Name}";
-    protected override EdmElement? Parent => ParentSchema;
-
     internal void AddMember(Member member)
     {
         member.ParentEnumType = this;
@@ -32,25 +29,30 @@ public sealed class EnumType(
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _members, .. _annotations];
+    #region IEdmElement
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentSchema;
+    string IEdmElement.TargetPathSegment => $".{Name}";
+    LineInfo IEdmElement.LineInfo { get; set; } = new();
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _members, .. _annotations];
+
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
         yield return ("UnderlyingType", UnderlyingType);
         yield return ("IsFlags", IsFlags);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static EnumType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         // https://docs.oasis-open.org/odata/odata-csdl-xml/v4.02/csd01/odata-csdl-xml-v4.02-csd01.html#ElementedmEnumType.17
         var enumType = new EnumType(
                 startElement.Get("Name"),
                 startElement.Parse<UnderlyingIntegerType>("UnderlyingType"),
-                startElement.Parse<bool>("IsFlags"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+                startElement.Parse<bool>("IsFlags"));
 
         if (stack.TryPeek(out var parent) && parent is Schema schema)
         {
@@ -58,15 +60,14 @@ public sealed class EnumType(
         }
 
         stack.Push(enumType);
+        return enumType;
     }
 }
 
 /// <summary>
 /// Represents a Member of an Enumeration Type
 /// </summary>
-public sealed class Member(
-    string Name,
-    uint? Value = null) : EdmElement(Name), IEdmElementCreator
+public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmElementCreator<Member>
 {
     public uint? Value { get; } = Value;
 
@@ -75,33 +76,34 @@ public sealed class Member(
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public EnumType? ParentEnumType { get; internal set; }
 
-    public override string TargetPathSegment => $"/{Name}";
-    
-    protected override EdmElement? Parent => ParentEnumType;
-
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    #region IEdmElement
+
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentEnumType;
+    string IEdmElement.TargetPathSegment => $"/{Name}";
+    LineInfo IEdmElement.LineInfo { get; set; } = new();
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         .. _annotations,
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
         if (Value != null)
         {
             yield return ("Value", Value);
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static Member Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var member = new Member(
             startElement.Get("Name"),
-            startElement.ParseNullable<uint>("Value"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.ParseNullable<uint>("Value"));
 
         if (stack.TryPeek(out var parent) && parent is EnumType enumType)
         {
@@ -109,5 +111,6 @@ public sealed class Member(
         }
 
         stack.Push(member);
+        return member;
     }
 }

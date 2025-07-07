@@ -6,13 +6,13 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Annotation
 /// </summary>
-public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotation"), IEdmElementCreator
+public sealed class Annotation(string? Qualifier = null) : IEdmElement, IEdmElementCreator<Annotation>
 {
     public Term Term { get; internal set; } = default!;
     
     public string? Qualifier { get; } = Qualifier;
 
-    public EdmElement? ParentElement { get; internal set; }
+    public IEdmElement? ParentElement { get; internal set; }
     
     private readonly List<Annotation> _annotations = [];
 
@@ -40,10 +40,24 @@ public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotatio
 
     public AnnotationExpression? Expression { get; init; }
 
-    public override string TargetPathSegment => 
+    public string Name { get; internal set; } = "Annotation";
+
+    public string TargetPathSegment => 
         $"@{Term}" + (Qualifier != null ? $"#{Qualifier}" : "");
     
-    protected override EdmElement? Parent => ParentElement;
+    public string? TargetPath
+    {
+        get
+        {
+            if (TargetPathSegment is null)
+            {
+                return null;
+            }
+            return Parent?.TargetPath + TargetPathSegment;
+        }
+    }
+    
+    public IEdmElement? Parent => ParentElement;
 
     internal void AddAnnotation(Annotation annotation)
     {
@@ -51,12 +65,11 @@ public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotatio
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    public IReadOnlyCollection<IEdmElement> Children => [
         .. _annotations
     ];
 
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Term", Term);
         if (Qualifier != null)
@@ -78,13 +91,19 @@ public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotatio
         // }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public LineInfo LineInfo { get; set; }
+
+    public override string ToString()
+    {
+        var properties = GetBasicProperties();
+        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
+        return $@"<{GetType().Name} {propertyString} \>";
+    }
+
+    public static Annotation Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var annotation = new Annotation(
-                startElement.Get("Qualifier", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+                startElement.Get("Qualifier", null));
 
         // Handle the most common parent types that support annotations
         if (stack.TryPeek(out var parent))
@@ -151,5 +170,6 @@ public sealed class Annotation(string? Qualifier = null) : EdmElement("Annotatio
         });
 
         stack.Push(annotation);
+        return annotation;
     }
 }

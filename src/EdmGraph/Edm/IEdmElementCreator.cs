@@ -1,6 +1,6 @@
 namespace EdmGraph.Edm;
 
-public interface IEdmElementCreator
+public interface IEdmElementCreator<T> where T : IEdmElement
 {
-    static abstract void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions);
+    static abstract T Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions);
 }

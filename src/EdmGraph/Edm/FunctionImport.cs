@@ -3,7 +3,8 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Function Import
 /// </summary>
-public sealed class FunctionImport(string Name, string Function, string? EntitySet = null, bool IncludeInServiceDocument = false) : EdmElement(Name), IEdmElementCreator
+public sealed class FunctionImport(string Name, string Function, string? EntitySet = null, bool IncludeInServiceDocument = false) 
+    : IEdmElement, IEdmElementCreator<FunctionImport>
 {
     public string Function { get; } = Function;
     public string? EntitySet { get; } = EntitySet;
@@ -15,20 +16,25 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public override string TargetPathSegment => $"/{Name}";
-    protected override EdmElement? Parent => ParentEntityContainer;
-
     internal void AddAnnotation(Annotation annotation)
     {
         _annotations.Add(annotation);
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
+    #region IEdmElement
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public LineInfo LineInfo { get; set; } 
+
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
+    string IEdmElement.TargetPathSegment => $"/{Name}";
+   
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", ((IEdmElement)this).TargetPath);
         yield return ("Function", Function);
         if (EntitySet != null)
         {
@@ -37,16 +43,15 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
         yield return ("IncludeInServiceDocument", IncludeInServiceDocument);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static FunctionImport Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var functionImport = new FunctionImport(
            startElement.Get("Name"),
            startElement.Get("Function"),
            startElement.Get("EntitySet", null),
-           startElement.Parse<bool>("IncludeInServiceDocument", false))
-        {
-            LineInfo = startElement.LineInfo
-        };
+           startElement.Parse<bool>("IncludeInServiceDocument", false));
 
         if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
         {
@@ -68,5 +73,6 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
         }
 
         stack.Push(functionImport);
+        return functionImport;
     }
 }

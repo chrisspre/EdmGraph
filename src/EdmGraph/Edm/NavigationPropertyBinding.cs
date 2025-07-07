@@ -4,35 +4,40 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Navigation Property Binding
 /// </summary>
-public sealed class NavigationPropertyBinding(string Path, string Target) : EdmElement("NavigationPropertyBinding"), IEdmElementCreator
+public sealed class NavigationPropertyBinding(string Path, string Target) : IEdmElement, IEdmElementCreator<NavigationPropertyBinding>
 {
     public string Path { get; } = Path;
     public string Target { get; } = Target;
 
-    public EdmElement? ParentElement { get; internal set; }
+    public IEdmElement? ParentElement { get; internal set; }
 
-    public override string TargetPathSegment => null!; // NavigationPropertyBinding does not have a target path segment on its own
+    #region IEdmElement
 
-    protected override EdmElement? Parent => ParentElement;
+    public LineInfo LineInfo { get; set; }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
+    string? IEdmElement.Name => "NavigationPropertyBinding";
+
+    IEdmElement? IEdmElement.Parent => ParentElement;
+    
+    string IEdmElement.TargetPathSegment => "/NavigationPropertyBinding";
+
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
         // NavigationPropertyBinding does not have children
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         yield return ("Path", Path);
         yield return ("Target", Target);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static NavigationPropertyBinding Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var navigationPropertyBinding = new NavigationPropertyBinding(
            startElement.Get("Path"),
-           startElement.Get("Target"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+           startElement.Get("Target"));
 
         if (stack.TryPeek(out var parent))
         {
@@ -58,5 +63,6 @@ public sealed class NavigationPropertyBinding(string Path, string Target) : EdmE
         // });
 
         stack.Push(navigationPropertyBinding);
+        return navigationPropertyBinding;
     }
 }

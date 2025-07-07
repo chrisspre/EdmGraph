@@ -5,18 +5,22 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents the root EDMX element
 /// </summary>
-public sealed class Edmx(string Version = "4.0") : EdmElement("Edmx")
+public sealed class Edmx(string Version = "4.0") : IEdmElement
 {
     private readonly List<Reference> _references = [];
 
     public IReadOnlyCollection<Reference> References => _references;
     public DataServices? DataServices { get; private set; }
 
-    public override string TargetPathSegment => "";
+    public string Name { get; internal set; } = "Edmx";
+
+    public string TargetPathSegment => null!; // The Edmx element does not have a target path segment
+
+    public string? TargetPath => TargetPathSegment is null ? null : Parent?.TargetPath + TargetPathSegment;
 
     public string Version { get; } = Version;
 
-    protected override EdmElement? Parent => null;
+    public IEdmElement? Parent => null;
 
     internal void AddReference(Reference reference)
     {
@@ -30,22 +34,30 @@ public sealed class Edmx(string Version = "4.0") : EdmElement("Edmx")
         dataServices.ParentEdmx = this;
     }
 
-
-    public override IReadOnlyCollection<EdmElement> Children => [
+    public IReadOnlyCollection<IEdmElement> Children => [
         .. _references,
-        .. (DataServices is null ? Enumerable.Empty<EdmElement>() : [DataServices])
+        .. (DataServices is null ? Enumerable.Empty<IEdmElement>() : [DataServices])
     ];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Version", Version);
+    }
+
+    public LineInfo LineInfo { get; set; }
+
+    public override string ToString()
+    {
+        var properties = GetBasicProperties();
+        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
+        return $@"<{GetType().Name} {propertyString} \>";
     }
 }
 
 /// <summary>
 /// Represents the EDMX DataServices element
 /// </summary>
-public sealed class DataServices() : EdmElement("DataServices")
+public sealed class DataServices() : IEdmElement
 {
     public Edmx? ParentEdmx { get; internal set; }
 
@@ -57,8 +69,21 @@ public sealed class DataServices() : EdmElement("DataServices")
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public override string TargetPathSegment => "";
+    public string Name { get; internal set; } = "DataServices";
 
+    public string TargetPathSegment => "";
+
+    public string? TargetPath
+    {
+        get
+        {
+            if (TargetPathSegment is null)
+            {
+                return null;
+            }
+            return Parent?.TargetPath + TargetPathSegment;
+        }
+    }
 
     internal void AddSchema(Schema schema)
     {
@@ -72,13 +97,22 @@ public sealed class DataServices() : EdmElement("DataServices")
         annotation.ParentElement = this;
     }
 
-    protected override EdmElement? Parent => ParentEdmx;
+    public IEdmElement? Parent => ParentEdmx;
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _schemas];
+    public IReadOnlyCollection<IEdmElement> Children => [.. _schemas];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         // DataServices doesn't have additional basic properties beyond its name
         yield break;
+    }
+
+    public LineInfo LineInfo { get; set; }
+
+    public override string ToString()
+    {
+        var properties = GetBasicProperties();
+        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
+        return $@"<{GetType().Name} {propertyString} \>";
     }
 }

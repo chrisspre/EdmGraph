@@ -11,9 +11,9 @@ class Program
     static void Main()
     {
         string[] paths = [
-            // @"data\example89.xml",
-            // @"data\microsoft-graph.xml",
-            @"data\reporting-line.xml",
+            // @"..\..\data\example89.xml",
+            @"..\..\data\microsoft-graph.xml",
+            // @"..\..\data\reporting-line.xml",
         ];
 
 

@@ -1,7 +1,5 @@
 namespace EdmGraph.Edm;
 
-
-
 /// <summary>
 /// Represents an EDM Structural Property
 /// </summary>
@@ -13,19 +11,11 @@ public sealed class Property(
     int? Precision = null,
     Scale Scale = default,
     int? SRID = null,
-    string? DefaultValue = null) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator
+    string? DefaultValue = null
+) 
+: IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator<Property>
 {
-    private readonly List<Annotation> _annotations = [];
-
-    public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public EdmElement? ParentElement { get; internal set; }
-
-    public override string TargetPathSegment => $"/{Name}";
-
-    protected override EdmElement? Parent => ParentElement;
-
-    public IEdmPropertyType Type { get; internal set; } = null!;
-
+    public string Name { get; } = Name;
     public bool? Nullable { get; } = Nullable;
     public int? MaxLength { get; } = MaxLength;
     public bool Unicode { get; } = Unicode;
@@ -34,14 +24,28 @@ public sealed class Property(
     public int? SRID { get; } = SRID;
     public string? DefaultValue { get; } = DefaultValue;
     public bool IsCollection { get; internal set; }
+    public IEdmPropertyType Type { get; internal set; } = null!;
+
+    private readonly List<Annotation> _annotations = [];
+
+    public IReadOnlyCollection<Annotation> Annotations => _annotations;
+    public IEdmElement? ParentElement { get; internal set; }
+
+    // IEdmElement implementation
+    public string TargetPathSegment => $"/{Name}";
+    public IEdmElement? Parent => ParentElement;
+    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _annotations
-    ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return (nameof(Name), Name);
         if (Nullable ?? true) { yield return (nameof(Nullable), Nullable); }
@@ -53,7 +57,16 @@ public sealed class Property(
         if (DefaultValue != null) { yield return (nameof(DefaultValue), DefaultValue); }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static Property Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var property = new Property(
             startElement.Get("Name"),
@@ -63,10 +76,7 @@ public sealed class Property(
             startElement.ParseNullable<int>("Precision"),
             startElement.Parse<Scale>("Scale"),
             startElement.ParseNullable<int>("SRID"),
-            startElement.Get("DefaultValue", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Get("DefaultValue", null));
 
         if (stack.TryPeek(out var parent))
         {
@@ -80,11 +90,12 @@ public sealed class Property(
                     break;
             }
         }
-        actions.Add(Priorities.Type, property, startElement.Get("Type"), SetType);
+        actions.Add(Priorities.Type, property, startElement.Get("Type"), SetTypeAction);
         stack.Push(property);
+        return property;
 
         // static helper method for the deferred action to set the Type property of Property, NavigationProperty, Parameter, etc.
-        static void SetType(Property element, string path, IElementResolver resolver)
+        static void SetTypeAction(Property element, string path, IElementResolver resolver)
         {
             if (path.StartsWith("Collection(") && path.EndsWith(')'))
             {

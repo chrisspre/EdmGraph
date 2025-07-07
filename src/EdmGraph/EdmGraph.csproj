@@ -7,8 +7,8 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EdmGraph</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Your Name</Authors>
-    <Description>A sample class library</Description>
+    <Authors>Christof Sprenger</Authors>
+    <Description>A class library to inspect EDM models</Description>
   </PropertyGroup>
 
   <ItemGroup>

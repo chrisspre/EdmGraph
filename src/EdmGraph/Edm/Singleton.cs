@@ -6,8 +6,9 @@ namespace EdmGraph.Edm;
 public sealed class Singleton(
     string Name,
     string Type,
-    bool Nullable = false) : EdmElement(Name), IEdmElementCreator
+    bool Nullable = false) : IEdmElement, IEdmElementCreator<Singleton>
 {
+    public string Name { get; } = Name;
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
 
@@ -19,8 +20,17 @@ public sealed class Singleton(
     public IReadOnlyCollection<NavigationPropertyBinding> NavigationPropertyBindings => _navigationPropertyBindings;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public override string TargetPathSegment => $"/{Name}";
-    protected override EdmElement? Parent => ParentEntityContainer;
+    // IEdmElement implementation
+    public string TargetPathSegment => $"/{Name}";
+    public IEdmElement? Parent => ParentEntityContainer;
+    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
     internal void AddNavigationPropertyBinding(NavigationPropertyBinding binding)
     {
@@ -34,16 +44,23 @@ public sealed class Singleton(
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         yield return ("Type", Type);
         yield return ("Nullable", Nullable);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static Singleton Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var singleton = new Singleton(
             startElement.Get("Name"),
@@ -52,9 +69,14 @@ public sealed class Singleton(
             LineInfo = startElement.LineInfo
         };
 
-        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        if (stack.TryPeek(out var parent))
         {
-            entityContainer.AddSingleton(singleton);
+            switch (parent)
+            {
+                case EntityContainer entityContainer:
+                    entityContainer.AddSingleton(singleton);
+                    break;
+            }
         }
 
         // TODO: Add deferred action for Type property resolution
@@ -63,5 +85,6 @@ public sealed class Singleton(
         // });
 
         stack.Push(singleton);
+        return singleton;
     }
 }

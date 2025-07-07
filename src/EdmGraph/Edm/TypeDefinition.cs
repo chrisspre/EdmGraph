@@ -12,8 +12,9 @@ public sealed class TypeDefinition(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name), IEdmElementCreator
+    int? SRID = null) : IEdmElement, IEdmElementCreator<TypeDefinition>
 {
+    public string Name { get; } = Name;
     public string UnderlyingType { get; } = UnderlyingType;
     public int? MaxLength { get; } = MaxLength;
     public bool Unicode { get; } = Unicode;
@@ -25,15 +26,22 @@ public sealed class TypeDefinition(
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public Schema? ParentSchema { get; internal set; }
-
-    public override string TargetPathSegment => $".{Name}";
-    protected override EdmElement? Parent => ParentSchema;
+    
+    // IEdmElement implementation
+    public string TargetPathSegment => $".{Name}";
+    public IEdmElement? Parent => ParentSchema;
+    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         yield return ("UnderlyingType", UnderlyingType);
@@ -56,7 +64,16 @@ public sealed class TypeDefinition(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static TypeDefinition Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var typeDefinition = new TypeDefinition(
             startElement.Get("Name"),
@@ -90,5 +107,6 @@ public sealed class TypeDefinition(
         // });
 
         stack.Push(typeDefinition);
+        return typeDefinition;
     }
 }

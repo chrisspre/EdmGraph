@@ -4,10 +4,9 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDMX Reference
 /// </summary>
-public sealed class Reference(string Uri) : EdmElement("Reference"), IEdmElementCreator
+public sealed class Reference(string Uri) : IEdmElement, IEdmElementCreator<Reference>
 {
     public string Uri { get; } = Uri;
-
     public Edmx? ParentEdmx { get; internal set; }
 
     private readonly List<Include> _includes = [];
@@ -18,8 +17,23 @@ public sealed class Reference(string Uri) : EdmElement("Reference"), IEdmElement
     public IReadOnlyCollection<IncludeAnnotations> IncludeAnnotations => _includeAnnotations;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public override string TargetPathSegment => $"/Reference[@Uri='{Uri}']";
-    protected override EdmElement? Parent => ParentEdmx;
+    #region IEdmElement Implementation
+
+    string? IEdmElement.Name => "Reference";
+    string IEdmElement.TargetPathSegment => $"/Reference[@Uri='{Uri}']";
+    IEdmElement? IEdmElement.Parent => ParentEdmx;
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
+        .. _includes,
+        .. _includeAnnotations,
+        .. _annotations
+    ];
+    LineInfo IEdmElement.LineInfo { get; set; }
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    {
+        yield return ("Uri", Uri);
+    }
+
+    #endregion
 
     internal void AddInclude(Include include)
     {
@@ -39,54 +53,32 @@ public sealed class Reference(string Uri) : EdmElement("Reference"), IEdmElement
         annotation.ParentElement = this;
     }
 
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _includes,
-        .. _includeAnnotations,
-        .. _annotations
-    ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public static Reference Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
-        yield return ("Uri", Uri);
-    }
+        var reference = new Reference(startElement.Get("Uri"));
 
-    internal static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
-    {
-        var reference = new Reference(startElement.Get("Uri"))
+        if (stack.TryPeek(out var parent))
         {
-            LineInfo = startElement.LineInfo
-        };
-
-        if (stack.TryPeek(out var parent) && parent is Edmx edmx)
-        {
-            edmx.AddReference(reference);
+            switch (parent)
+            {
+                case Edmx edmx:
+                    edmx.AddReference(reference);
+                    break;
+            }
         }
 
         stack.Push(reference);
-    }
-
-    static void IEdmElementCreator.Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
-    {
-        var reference = new Reference(startElement.Get("Uri"))
-        {
-            LineInfo = startElement.LineInfo
-        };
-
-        if (stack.TryPeek(out var parent) && parent is Edmx edmx)
-        {
-            edmx.AddReference(reference);
-        }
-
-        stack.Push(reference);
+        return reference;
     }
 }
 
 /// <summary>
 /// Represents an EDMX Include
 /// </summary>
-public sealed class Include(string Namespace, string? Alias = null) : EdmElement("Include"), IEdmElementCreator
+public sealed class Include(string Namespace, string? Alias = null) : IEdmElement, IEdmElementCreator<Include>
 {
     public string Namespace { get; } = Namespace;
+
     public string? Alias { get; } = Alias;
 
     public Reference? ParentReference { get; internal set; }
@@ -95,20 +87,14 @@ public sealed class Include(string Namespace, string? Alias = null) : EdmElement
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public override string TargetPathSegment => $"/Include[@Namespace='{Namespace}']";
-    protected override EdmElement? Parent => ParentReference;
+    #region IEdmElement Implementation
 
-    internal void AddAnnotation(Annotation annotation)
-    {
-        _annotations.Add(annotation);
-        annotation.ParentElement = this;
-    }
-
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _annotations
-    ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    string? IEdmElement.Name => "Include";
+    string IEdmElement.TargetPathSegment => $"/Include[@Namespace='{Namespace}']";
+    IEdmElement? IEdmElement.Parent => ParentReference;
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+    LineInfo IEdmElement.LineInfo { get; set; }
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         yield return ("Namespace", Namespace);
         if (Alias != null)
@@ -117,14 +103,19 @@ public sealed class Include(string Namespace, string? Alias = null) : EdmElement
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    internal void AddAnnotation(Annotation annotation)
+    {
+        _annotations.Add(annotation);
+        annotation.ParentElement = this;
+    }
+
+    public static Include Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var include = new Include(
            startElement.Get("Namespace"),
-           startElement.Get("Alias", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+           startElement.Get("Alias", null));
 
         if (stack.TryPeek(out var parent) && parent is Reference reference)
         {
@@ -132,13 +123,15 @@ public sealed class Include(string Namespace, string? Alias = null) : EdmElement
         }
 
         stack.Push(include);
+        return include;
     }
 }
 
 /// <summary>
 /// Represents an EDMX IncludeAnnotations
 /// </summary>
-public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier = null, string? TargetNamespace = null) : EdmElement("IncludeAnnotations"), IEdmElementCreator
+public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier = null, string? TargetNamespace = null) 
+    : IEdmElement, IEdmElementCreator<IncludeAnnotations>
 {
     public string TermNamespace { get; } = TermNamespace;
     public string? Qualifier { get; } = Qualifier;
@@ -146,31 +139,15 @@ public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier =
 
     public Reference? ParentReference { get; internal set; }
 
-    public override string TargetPathSegment => $"/IncludeAnnotations[@TermNamespace='{TermNamespace}']";
 
-    public override IReadOnlyCollection<EdmElement> Children => [];
+    #region IEdmElement Implementation
 
-    protected override EdmElement? Parent => ParentReference;
-
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
-    {
-        var includeAnnotations = new IncludeAnnotations(
-            startElement.Get("TermNamespace"),
-            startElement.Get("Qualifier", null),
-            startElement.Get("TargetNamespace", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
-
-        if (stack.TryPeek(out var parent) && parent is Reference reference)
-        {
-            reference.AddIncludeAnnotations(includeAnnotations);
-        }
-
-        stack.Push(includeAnnotations);
-    }
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    string? IEdmElement.Name => "IncludeAnnotations";
+    string IEdmElement.TargetPathSegment => $"/IncludeAnnotations[@TermNamespace='{TermNamespace}']";
+    IEdmElement? IEdmElement.Parent => ParentReference;
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [];
+    LineInfo IEdmElement.LineInfo { get; set;}
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         yield return ("TermNamespace", TermNamespace);
         if (Qualifier != null)
@@ -181,5 +158,23 @@ public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier =
         {
             yield return ("TargetNamespace", TargetNamespace);
         }
+    }
+
+    #endregion
+
+    public static IncludeAnnotations Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    {
+        var includeAnnotations = new IncludeAnnotations(
+            startElement.Get("TermNamespace"),
+            startElement.Get("Qualifier", null),
+            startElement.Get("TargetNamespace", null));
+
+        if (stack.TryPeek(out var parent) && parent is Reference reference)
+        {
+            reference.AddIncludeAnnotations(includeAnnotations);
+        }
+
+        stack.Push(includeAnnotations);
+        return includeAnnotations;
     }
 }

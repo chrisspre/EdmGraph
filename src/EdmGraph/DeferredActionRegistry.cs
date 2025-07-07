@@ -38,7 +38,7 @@ public class DeferredActionRegistry
     private readonly PriorityQueue<Action<IElementResolver>, int> _actions = new();
 
 
-    public void Add<T>(int priority, T element, string name, Action<T, string, IElementResolver> action) where T : EdmElement
+    public void Add<T>(int priority, T element, string name, Action<T, string, IElementResolver> action) where T : IEdmElement
     {
         // Register an action to be applied later
         _actions.Enqueue(resolver => action(element, name, resolver), priority);

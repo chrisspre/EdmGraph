@@ -1,74 +1,27 @@
 namespace EdmGraph.Edm;
 
+using System.Diagnostics.CodeAnalysis;
 
-/// <summary>
-/// Base class for all EDM model elements that support creation from CSDL tokens
-/// </summary>
-public abstract class EdmElement(string Name) : IEdmElement
+public static class IEdmElementExtensions
 {
-    public string Name { get; internal set;} = Name;
-
-    /// <summary>
-    /// Gets the target path segment for this element, including the appropriate separator
-    /// </summary>
-    public abstract string TargetPathSegment { get; }
-
-    /// <summary>
-    /// Gets the full target path for this element or null if the element has no target path.
-    /// The target path is constructed its target path segment and the targe path of the parent
-    /// </summary>
-    public string? TargetPath
+    public static IEnumerable<IEdmElement> DescendantsAndSelf(this IEdmElement element)
     {
-        get
+        var stack = new Stack<IEdmElement>();
+        stack.Push(element);
+
+        while (stack.Count > 0)
         {
-            if(TargetPathSegment is null) 
+            var current = stack.Pop();
+            yield return current;
+
+            foreach (var child in current.Children.Reverse())
             {
-                return null;
+                stack.Push(child);
             }
-            return Parent?.TargetPath + TargetPathSegment;
         }
     }
 
-    /// <summary>
-    /// Gets the parent element of this EDM element
-    /// </summary>
-    protected abstract EdmElement? Parent { get; }
-
-
-    public abstract IReadOnlyCollection<EdmElement> Children { get; }
-
-    protected abstract IEnumerable<(string, object?)> GetBasicProperties() ;
-
-    /// <summary>
-    /// Returns a string representation of this EDM element
-    /// </summary>
-    public override string ToString() 
-    {
-        var properties = GetBasicProperties();
-        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
-        return $@"<{GetType().Name} {propertyString} \>";
-    }
-
-
-    public  LineInfo LineInfo { get; init;}
-
-#region explicit IEdmElement implementation    
-    EdmElement? IEdmElement.Parent => Parent!;
-
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties() => GetBasicProperties();
-    
-    string IEdmElement.Name => Name;
-
-    string? IEdmElement.TargetPath => TargetPath;
-
-    IReadOnlyCollection<EdmElement> IEdmElement.Children => Children;
-#endregion
-}
-
-
-public static class EdmElementExtensions
-{
-    public static bool TryFind(this IEdmElement root, string path, [MaybeNullWhen(false)] out EdmElement result)
+    public static bool TryFind(this IEdmElement root, string path, [MaybeNullWhen(false)] out IEdmElement result)
     {
         var segments = ParsePathSegments(path); 
 
@@ -149,7 +102,7 @@ public static class EdmElementExtensions
     }
 
     // Recursive helper method to find a node by path segments
-    private static bool TryFind(IEnumerable<EdmElement> nodes, IReadOnlyList<string> segments, int i, [MaybeNullWhen(false)] out EdmElement node)
+    private static bool TryFind(IEnumerable<IEdmElement> nodes, IReadOnlyList<string> segments, int i, [MaybeNullWhen(false)] out IEdmElement node)
     {
         if (i == segments.Count)
         {
@@ -170,7 +123,7 @@ public static class EdmElementExtensions
                 {
                     if (TryFind(child.Children, segments, i + 1, out node))
                     {
-                    return true;
+                        return true;
                     }
                 }
             }
@@ -185,7 +138,7 @@ public static class EdmElementExtensions
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    private static HashSet<string> NodeSegmentNames(EdmElement element)
+    private static HashSet<string> NodeSegmentNames(IEdmElement element)
     {
         static HashSet<string> NoneNull(params string?[] values) => values.Where(v => v is not null).ToHashSet()!;
 
@@ -196,11 +149,11 @@ public static class EdmElementExtensions
             Annotation annotation =>
                 [annotation.Qualifier is not null ? $"{annotation.Term}#{annotation.Qualifier}" : $"{annotation.Term}"],
             Function function =>
-                [function.Name, $"{function.Name}({string.Join(",", function.Parameters.Select(p => p.Type))}))"],
+                [.. NoneNull(element.Name), $"{element.Name}({string.Join(",", function.Parameters.Select(p => p.Type))}))"],
             Action action =>
-                [action.Name, $"{action.Name}({string.Join(",", action.Parameters.Select(p => p.Type))}))"],            
+                [.. NoneNull(element.Name), $"{element.Name}({string.Join(",", action.Parameters.Select(p => p.Type))}))"],            
             _ =>
-                [ element.Name],
+                [.. NoneNull(element.Name)],
         };
     }
 }

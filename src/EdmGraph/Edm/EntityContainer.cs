@@ -5,8 +5,11 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntityContainer(
     string Name,
-    string? Extends = null) : EdmElement(Name), IEdmElementCreator
+    string? Extends = null) : IEdmElement, IEdmElementCreator<EntityContainer>
 {
+    public string Name { get; } = Name;
+    public string? Extends { get; } = Extends;
+
     private readonly List<EntitySet> _entitySets = [];
     private readonly List<Singleton> _singletons = [];
     private readonly List<ActionImport> _actionImports = [];
@@ -21,10 +24,31 @@ public sealed class EntityContainer(
 
     public Schema? ParentSchema { get; internal set; }
 
-    public override string TargetPathSegment => $".{Name}";
-    protected override EdmElement? Parent => ParentSchema;
+    // IEdmElement implementation
+    public string TargetPathSegment => $".{Name}";
+    public IEdmElement? Parent => ParentSchema;
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
-    public string? Extends { get; } = Extends;
+    public IReadOnlyCollection<IEdmElement> Children 
+    {
+        get
+        {
+            var children = new List<IEdmElement>();
+            // TODO: Add children back after other classes are refactored
+            // children.AddRange(_entitySets.Cast<IEdmElement>());
+            // children.AddRange(_singletons.Cast<IEdmElement>());
+            // children.AddRange(_actionImports.Cast<IEdmElement>());
+            // children.AddRange(_functionImports.Cast<IEdmElement>());
+            children.AddRange(_annotations.Cast<IEdmElement>());
+            return children;
+        }
+    }
 
     internal void AddEntitySet(EntitySet entitySet)
     {
@@ -52,16 +76,7 @@ public sealed class EntityContainer(
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _entitySets,
-        .. _singletons,
-        .. _actionImports,
-        .. _functionImports,
-        .. _annotations,
-    ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         if (Extends != null)
@@ -70,14 +85,20 @@ public sealed class EntityContainer(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static EntityContainer Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var entityContainer = new EntityContainer(
             startElement.Get("Name"),
-            startElement.Get("Extends", null))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Get("Extends", null));
 
         if (stack.TryPeek(out var parent) && parent is Schema schema)
         {
@@ -94,5 +115,6 @@ public sealed class EntityContainer(
         }
 
         stack.Push(entityContainer);
+        return entityContainer;
     }
 }

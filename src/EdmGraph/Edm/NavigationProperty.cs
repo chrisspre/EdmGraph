@@ -9,20 +9,15 @@ namespace EdmGraph.Edm;
 public sealed class NavigationProperty(
     string Name,
     bool? Nullable = default,
-    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator
+    bool ContainsTarget = false) : IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator<NavigationProperty>
 {
     private readonly List<ReferentialConstraint> _referentialConstraints = [];
     private readonly List<Annotation> _annotations = [];
-
     public IReadOnlyCollection<ReferentialConstraint> ReferentialConstraints => _referentialConstraints;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public OnDelete? OnDelete { get; private set; }
     
-    public EdmElement? ParentElement { get; internal set; }
-
-    public override string TargetPathSegment => $"/{Name}";
-    
-    protected override EdmElement? Parent => ParentElement;
+    public IEdmElement? ParentElement { get; internal set; }
 
     internal void AddReferentialConstraint(ReferentialConstraint constraint) 
     {
@@ -38,20 +33,6 @@ public sealed class NavigationProperty(
         OnDelete = onDelete;
     }
 
-
-    public override IReadOnlyCollection<EdmElement> Children => [
-        .. _annotations,
-        .. _referentialConstraints,
-        .. OnDelete is not null ? [OnDelete] : Enumerable.Empty<EdmElement>()
-    ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        yield return ("Name", Name);
-        yield return ("Nullable", Nullable);
-        yield return ("ContainsTarget", ContainsTarget);
-    }
-
     public EntityType Type { get; internal set; } = null!; // Type will be set later via deferred action
     
     public bool IsCollection { get; internal set; }
@@ -59,17 +40,34 @@ public sealed class NavigationProperty(
     public bool? Nullable { get; } = Nullable;
     public NavigationProperty? Partner { get; internal set;} 
     public bool ContainsTarget { get; } = ContainsTarget;
-
     IEdmPropertyType IProperty.Type => Type;
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #region IEdmElement
+    public LineInfo LineInfo { get; set; }
+    string? IEdmElement.Name => Name;
+    IEdmElement? IEdmElement.Parent => ParentElement;
+    string IEdmElement.TargetPathSegment => $"/{Name}";
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
+        .. _annotations,
+        .. _referentialConstraints,
+        .. OnDelete is not null ? [OnDelete] : Enumerable.Empty<IEdmElement>()
+    ];
+
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    {
+        yield return ("Name", Name);
+        yield return ("Nullable", Nullable);
+        yield return ("ContainsTarget", ContainsTarget);
+    }
+
+    #endregion
+
+    public static NavigationProperty Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var navigationProperty = new NavigationProperty(
             startElement.Get("Name"),
-            startElement.ParseNullable<bool>("Nullable"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.ParseNullable<bool>("Nullable"),
+            startElement.Parse<bool>("ContainsTarget", false))       ;
 
         if (stack.TryPeek(out var parent))
         {
@@ -85,7 +83,7 @@ public sealed class NavigationProperty(
         }
 
         // Add deferred action for Type property resolution
-        actions.Add(Priorities.Type, navigationProperty, startElement.Get("Type"), SetType);
+        actions.Add(Priorities.Type, navigationProperty, startElement.Get("Type"), SetTypeAction);
 
         // Add deferred action for Partner property resolution if Partner is not null
         var partner = startElement.Get("Partner", null);
@@ -105,7 +103,9 @@ public sealed class NavigationProperty(
 
         stack.Push(navigationProperty);
 
-        static void SetType(NavigationProperty element, string path, IElementResolver resolver)
+        return navigationProperty;
+
+        static void SetTypeAction(NavigationProperty element, string path, IElementResolver resolver)
         {
             if (path.StartsWith("Collection(") && path.EndsWith(')'))
             {
@@ -125,32 +125,34 @@ public sealed class NavigationProperty(
 /// <summary>
 /// Represents a Referential Constraint on a Navigation Property
 /// </summary>
-public sealed class ReferentialConstraint() : EdmElement("ReferentialConstraint"), IEdmElementCreator
+public sealed class ReferentialConstraint() : IEdmElement, IEdmElementCreator<ReferentialConstraint>
 {
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public NavigationProperty? ParentNavigationProperty { get; internal set; }
 
-    public override string TargetPathSegment => null!; // ReferentialConstraint does not have a target path segment on its own
-    protected override EdmElement? Parent => ParentNavigationProperty;
-
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
+    #region IEdmElement
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    string? IEdmElement.Name => "ReferentialConstraint";
+    IEdmElement? IEdmElement.Parent => ParentNavigationProperty;
+    string IEdmElement.TargetPathSegment => "/ReferentialConstraint";
+    LineInfo IEdmElement.LineInfo  { get; set; } 
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         // ReferentialConstraint doesn't have additional basic properties beyond its name
         yield break;
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static ReferentialConstraint Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
-        var referentialConstraint = new ReferentialConstraint()
-        {
-            LineInfo = startElement.LineInfo
-        };
+        var referentialConstraint = new ReferentialConstraint();
 
         if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
         {
@@ -158,40 +160,43 @@ public sealed class ReferentialConstraint() : EdmElement("ReferentialConstraint"
         }
 
         stack.Push(referentialConstraint);
+        return referentialConstraint;
     }
 }
 
 /// <summary>
 /// Represents an On-Delete Action for a Navigation Property
 /// </summary>
-public sealed class OnDelete(    string Action) : EdmElement("OnDelete"), IEdmElementCreator
+public sealed class OnDelete(string Action) : IEdmElement, IEdmElementCreator<OnDelete>
 {
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public NavigationProperty? ParentNavigationProperty { get; internal set; }
 
-    public override string TargetPathSegment => "/OnDelete";
-
     public string Action { get; } = Action;
-
-    protected override EdmElement? Parent => ParentNavigationProperty;
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
+    #region IEdmElement
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    string? IEdmElement.Name => "OnDelete";
+    IEdmElement? IEdmElement.Parent => ParentNavigationProperty;
+    string IEdmElement.TargetPathSegment => "/OnDelete";
+    LineInfo IEdmElement.LineInfo { get; set; } 
+   
+    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+
+    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
         yield return ("Action", Action);
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    #endregion
+
+    public static OnDelete Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
-        var onDelete = new OnDelete(startElement.Get("Action"))
-        {
-            LineInfo = startElement.LineInfo
-        };
+        var onDelete = new OnDelete(startElement.Get("Action"));
 
         if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
         {
@@ -199,5 +204,6 @@ public sealed class OnDelete(    string Action) : EdmElement("OnDelete"), IEdmEl
         }
 
         stack.Push(onDelete);
+        return onDelete;
     }
 }

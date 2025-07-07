@@ -12,8 +12,9 @@ public sealed class Parameter(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name), IEdmElementCreator
+    int? SRID = null) : IEdmElement, IEdmElementCreator<Parameter>
 {
+    public string Name { get; } = Name;
     public IEdmPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
     public bool Nullable { get; } = Nullable;
     public int? MaxLength { get; } = MaxLength;
@@ -25,16 +26,23 @@ public sealed class Parameter(
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
+    public IEdmElement? ParentElement { get; internal set; }
 
-    public EdmElement? ParentElement { get; internal set; }
-
-    public override string TargetPathSegment => $"/{Name}";
-    protected override EdmElement? Parent => ParentElement;
+    // IEdmElement implementation
+    public string TargetPathSegment => $"/{Name}";
+    public IEdmElement? Parent => ParentElement;
+    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
-    public override IReadOnlyCollection<EdmElement> Children => [.. _annotations];
 
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         yield return ("Type", Type);
@@ -58,14 +66,20 @@ public sealed class Parameter(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static Parameter Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var parameter = new Parameter(
             startElement.Get("Name"),
-            startElement.Parse<bool>("Nullable", true))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Parse<bool>("Nullable", true));
 
         if (stack.TryPeek(out var parent))
         {
@@ -80,11 +94,12 @@ public sealed class Parameter(
             }
         }
 
-        actions.Add(Priorities.Type, parameter, startElement.Get("Type"), SetType);
+        actions.Add(Priorities.Type, parameter, startElement.Get("Type"), SetTypeAction);
         stack.Push(parameter);
+        return parameter;
 
         // static helper method for the deferred action to set the Type property of Parameter
-        static void SetType(Parameter parameter, string path, IElementResolver resolver)
+        static void SetTypeAction(Parameter parameter, string path, IElementResolver resolver)
         {
             if (path.StartsWith("Collection(") && path.EndsWith(')'))
             {
@@ -96,6 +111,8 @@ public sealed class Parameter(
             {
                 Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, parameter);
             }
+
+            
         }
     }
 }

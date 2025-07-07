@@ -14,15 +14,9 @@ public sealed class Term(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : EdmElement(Name), IEdmElementCreator
+    int? SRID = null) : IEdmElement, IEdmElementCreator<Term>
 {
-    private readonly List<Annotation> _annotations = [];
-
-    public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public Schema? ParentSchema { get; internal set; }
-
-    public override string TargetPathSegment => $".{Name}";
-
+    public string Name { get; } = Name;
     public string Type { get; } = Type;
     public string? BaseTerm { get; } = BaseTerm;
     public string? AppliesTo { get; } = AppliesTo;
@@ -34,13 +28,26 @@ public sealed class Term(
     public string? Scale { get; } = Scale;
     public int? SRID { get; } = SRID;
 
-    protected override EdmElement? Parent => ParentSchema;
+    private readonly List<Annotation> _annotations = [];
+
+    public IReadOnlyCollection<Annotation> Annotations => _annotations;
+    public Schema? ParentSchema { get; internal set; }
+
+    // IEdmElement implementation
+    public string TargetPathSegment => $".{Name}";
+    public IEdmElement? Parent => ParentSchema;
+    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public LineInfo LineInfo { get; set; }
+    
+    public string TargetPath => Parent switch
+    {
+        null => Name,
+        _ => Parent.TargetPath + TargetPathSegment
+    };
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public override IReadOnlyCollection<EdmElement> Children => [       .. _annotations   ];
-
-    protected override IEnumerable<(string, object?)> GetBasicProperties()
+    public IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", TargetPath);
         yield return ("Type", Type);
@@ -76,7 +83,16 @@ public sealed class Term(
         }
     }
 
-    public static void Create(CsdlToken.StartElement startElement, Stack<EdmElement> stack, DeferredActionRegistry actions)
+    public override string ToString()
+    {
+        var properties = GetBasicProperties()
+            .Select(p => $"{p.Item1}: {p.Item2}")
+            .ToArray();
+
+        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    }
+
+    public static Term Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
     {
         var term = new Term(
             startElement.Get("Name"),
@@ -84,10 +100,7 @@ public sealed class Term(
             startElement.Get("BaseTerm", null),
             startElement.Get("AppliesTo", null),
             startElement.Get("DefaultValue", null),
-            startElement.Parse<bool>("Nullable", true))
-        {
-            LineInfo = startElement.LineInfo
-        };
+            startElement.Parse<bool>("Nullable", true));
 
         if (stack.TryPeek(out var parent) && parent is Schema schema)
         {
@@ -109,5 +122,6 @@ public sealed class Term(
         }
 
         stack.Push(term);
+        return term;
     }
 }

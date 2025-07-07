@@ -24,7 +24,7 @@ public static class ModelBuilder
 
     private static void Phase1(IEnumerable<CsdlToken> tokens, DataServices dataServices, DeferredActionRegistry actions)
     {
-        var stack = new Stack<EdmElement>();
+        var stack = new Stack<IEdmElement>();
         stack.Push(dataServices);
 
         foreach (var token in tokens)
@@ -36,22 +36,41 @@ public static class ModelBuilder
                         switch (startElement.Name)
                         {
                             case "Schema":
-                                Schema.Create(startElement, stack, actions);
+                                {
+                                    var element = Schema.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "EntityType":
-                                EntityType.Create(startElement, stack, actions);
+                                {
+                                    var element = EntityType.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "ComplexType":
-                                ComplexType.Create(startElement, stack, actions);
+                                {
+                                    var element = ComplexType.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "Property":
-                                Property.Create(startElement, stack, actions);
+                                {
+                                    var element = Property.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "NavigationProperty":
-                                NavigationProperty.Create(startElement, stack, actions);
+                                {
+                                    var element = NavigationProperty.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
+
                             case "Key":
-                                Key.Create(startElement, stack, actions);
+                                {
+                                    var element = Key.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "PropertyRef":
                                 PropertyRef.Create(startElement, stack, actions);
@@ -66,46 +85,55 @@ public static class ModelBuilder
                                 TypeDefinition.Create(startElement, stack, actions);
                                 break;
                             case "Function":
-                                Function.Create(startElement, stack, actions);
+                                {
+                                    var element = Function.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "Action":
-                                Action.Create(startElement, stack, actions);
+                                {
+                                    var element = Action.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "Parameter":
-                                Parameter.Create(startElement, stack, actions);
+                                {
+                                    var element = Parameter.Create(startElement, stack, actions);
+                                    element.LineInfo = startElement.LineInfo;
+                                }
                                 break;
                             case "ReturnType":
                                 ReturnType.Create(startElement, stack, actions);
                                 break;
                             case "EntityContainer":
-                                EntityContainer.Create( startElement, stack, actions);
+                                EntityContainer.Create(startElement, stack, actions);
                                 break;
                             case "EntitySet":
-                                EntitySet.Create( startElement, stack, actions);
+                                EntitySet.Create(startElement, stack, actions);
                                 break;
                             case "Singleton":
-                                Singleton.Create( startElement, stack, actions);
+                                Singleton.Create(startElement, stack, actions);
                                 break;
                             case "FunctionImport":
-                                FunctionImport.Create( startElement, stack, actions);
+                                FunctionImport.Create(startElement, stack, actions);
                                 break;
                             case "ActionImport":
-                                ActionImport.Create( startElement, stack, actions);
+                                ActionImport.Create(startElement, stack, actions);
                                 break;
                             case "NavigationPropertyBinding":
-                                NavigationPropertyBinding.Create( startElement, stack, actions);
+                                NavigationPropertyBinding.Create(startElement, stack, actions);
                                 break;
                             case "ReferentialConstraint":
-                                ReferentialConstraint.Create( startElement, stack, actions);
+                                ReferentialConstraint.Create(startElement, stack, actions);
                                 break;
                             case "OnDelete":
-                                OnDelete.Create( startElement, stack, actions);
+                                OnDelete.Create(startElement, stack, actions);
                                 break;
                             case "Term":
-                                Term.Create( startElement, stack, actions);
+                                Term.Create(startElement, stack, actions);
                                 break;
                             case "Annotations":
-                                Annotations.Create( startElement, stack, actions);
+                                Annotations.Create(startElement, stack, actions);
                                 break;
                             case "Annotation":
                                 Annotation.Create(startElement, stack, actions);
@@ -149,8 +177,8 @@ public static class ModelBuilder
                     break;
             }
         }
-    }    
-    
+    }
+
     private static void Phase2(DeferredActionRegistry actions, DataServices model)
     {
         actions.ApplyActions(model);

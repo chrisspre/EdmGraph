@@ -1,36 +1,10 @@
+namespace EdmGraph.Edm;
 
-namespace EdmGraph;
-
-using System.Linq.Expressions;
-using EdmGraph.Edm;
-
-public static class EdmElementExtensions
+public static class IEdmElementFormattingExtensions
 {
-    public static IEnumerable<IEdmElement> DescendantsAndSelf(this IEdmElement element)
+    public static void WriteAsciiTree(this IEdmElement root, TextWriter writer)
     {
-        var stack = new Stack<IEdmElement>();
-        stack.Push(element);
-        
-        while (stack.Count > 0)
-        {
-            var current = stack.Pop();
-            yield return current;
-            
-            foreach (var child in current.Children.Reverse())
-            {
-                stack.Push(child);
-            }
-        }
-    }
-
-   
-}
-
-public static class EdmElementFormattingExtensions
-{
-    public static void WriteAsciiTree(this EdmElement root, TextWriter writer)
-    {
-        var stack = new Stack<(string, bool, EdmElement)>();
+        var stack = new Stack<(string, bool, IEdmElement)>();
         foreach (var (child, last) in WithLast(root.Children))
         {
             stack.Push(("", last, child));
