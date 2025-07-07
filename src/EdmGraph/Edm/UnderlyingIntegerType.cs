@@ -1,6 +1,4 @@
-namespace EdmGraph;
-
-using System.Diagnostics.CodeAnalysis;
+namespace EdmGraph.Edm;
 
 public readonly struct UnderlyingIntegerType : IParsable<UnderlyingIntegerType>
 {
