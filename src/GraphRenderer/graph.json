@@ -1,0 +1,111 @@
+{
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "a",
+          "label": "A"
+        }
+      },
+      {
+        "data": {
+          "id": "b",
+          "label": "B"
+        }
+      },
+      {
+        "data": {
+          "id": "c",
+          "label": "C"
+        }
+      },
+      {
+        "data": {
+          "id": "d",
+          "label": "D"
+        },
+        "classes": [
+          "foo",
+          "bar"
+        ]
+      },
+      {
+        "data": {
+          "id": "e",
+          "label": "E"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "source": "a",
+          "target": "b",
+          "label": "a to b"
+        }
+      },
+      {
+        "data": {
+          "source": "a",
+          "target": "c",
+          "label": "a to c"
+        }
+      },
+      {
+        "data": {
+          "source": "a",
+          "target": "d",
+          "label": "a to d"
+        }
+      },
+      {
+        "data": {
+          "source": "d",
+          "target": "e",
+          "label": "d to e"
+        }
+      }
+    ]
+  },
+  "style": [
+    {
+      "selector": "node",
+      "style": {
+        "shape": "round-rectangle",
+        "corner-radius": "20px",
+        "color": "#000",
+        "background-color": "#4a90e2",
+        "label": "data(label)",
+        "width": "5em",
+        "text-valign": "center",
+        "text-halign": "center"
+      }
+    },
+    {
+      "selector": "edge",
+      "style": {
+        "width": 3,
+        "line-color": "#333",
+        "target-arrow-shape": "triangle",
+        "target-arrow-color": "#333",
+        "label": "data(label)",
+        "font-size": "12px",
+        "color": "#333",
+        "text-background-color": "#fff",
+        "text-background-opacity": 0.8,
+        "text-background-padding": "3px",
+        "curve-style": "bezier"
+      }
+    }
+  ],
+  "layout": {
+    "name": "breadthfirst",
+    "animate": true,
+    "animation-duration": 200,
+    "animation-easing": "ease-in-out",
+    "node-dimensions-include-labels": true,
+    "spacing-factor": 1.75,
+    "node-overlap": 10,
+    "gravity": 0.9
+  }
+}

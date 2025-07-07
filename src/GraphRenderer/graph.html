@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cytoscape Graph</title>
+
+    <script src="https://unpkg.com/cytoscape@3.24.0/dist/cytoscape.min.js">    </script>
+    <style>
+        #cy {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 style="text-align:center;">Graph Visualization</h2>
+    <div id="cy"></div>
+
+    <script>
+        fetch('graph.json')
+            .then(response => response.json())
+            .then(data => {
+                cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: data.elements,
+                    layout: data.layout || { name: 'cose' },
+                    style: data.style || [
+                        {
+                            selector: 'node',
+                            style: {
+                                'background-color': '#666',
+                                'label': 'data(label)'
+                            }
+                        },
+                        {
+                            "selector": "edge",
+                            "style": {
+                                "width": 9,
+                            }
+                        }
+                    ]
+                });
+            })
+            .catch(error => {
+                console.error('Error loading graph:', error);
+            });
+    </script>
+</body>
+</html>
