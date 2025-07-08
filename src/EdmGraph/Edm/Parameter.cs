@@ -5,46 +5,35 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Parameter for an Action or Function
 /// </summary>
-public sealed class Parameter(
-    string Name,
-    bool Nullable = true,
-    int? MaxLength = null,
-    bool Unicode = true,
-    int? Precision = null,
-    string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementFactory<Parameter>
+public sealed class Parameter(string Name) : EdmElement(Name), IEdmElementFactory<Parameter>
 {
-    public string Name { get; } = Name;
     public IEdmPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
-    public bool Nullable { get; } = Nullable;
-    public int? MaxLength { get; } = MaxLength;
-    public bool Unicode { get; } = Unicode;
-    public int? Precision { get; } = Precision;
-    public string? Scale { get; } = Scale;
-    public int? SRID { get; } = SRID;
+
+    public bool Nullable { get; internal set; }
+    public int? MaxLength { get; internal set; }
+    public bool Unicode { get; internal set; }
+    public int? Precision { get; internal set; }
+    public Scale? Scale { get; internal set; }
+    public int? SRID { get; internal set; }
 
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public IEdmElement? ParentElement { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => $"/{Name}";
-    public IEdmElement? Parent => ParentElement;
-    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+    public IEdmElement ParentElement { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentElement;
+
+    public override IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", Name);
         yield return ("Type", Type);
         yield return ("Nullable", Nullable);
         if (MaxLength.HasValue)
@@ -66,32 +55,31 @@ public sealed class Parameter(
         }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static Parameter Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var parameter = new Parameter(
-            startElement.Get("Name"),
-            startElement.Parse<bool>("Nullable", true));
+            startElement.Get("Name"));
 
-        // TODO: check if parent is not null
+        parameter.ParentElement = parent;
+
+        // Initialize nullable and facets from attributes
+        parameter.Nullable = startElement.ParseNullable<bool>("Nullable") ?? false;
+        parameter.MaxLength = startElement.ParseNullable<int>("MaxLength");
+        parameter.Unicode = startElement.ParseNullable<bool>("Unicode") ?? false;
+        parameter.Precision = startElement.ParseNullable<int>("Precision");
+        parameter.Scale = startElement.ParseNullable<Scale>("Scale");
+        parameter.SRID = startElement.ParseNullable<int>("SRID");
+
+        switch (parent)
         {
-            switch (parent)
-            {
-                case Function function:
-                    function.AddParameter(parameter);
-                    break;
-                case Action action:
-                    action.AddParameter(parameter);
-                    break;
-            }
+            case Function function:
+                function.AddParameter(parameter);
+                break;
+            case Action action:
+                action.AddParameter(parameter);
+                break;
         }
 
         actions.Add(Priorities.Type, parameter, startElement.Get("Type"), SetTypeAction);
@@ -110,7 +98,7 @@ public sealed class Parameter(
             {
                 Log.Warning("'{path}' not found while trying to set the Type of {element}", path, parameter);
             }
-            
+
         }
     }
 }

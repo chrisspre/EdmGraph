@@ -93,7 +93,7 @@ public sealed class NavigationProperty(
             {
                 if (element.Type is null)
                 {
-                    Log.Warning("NavigationProperty {element} has a Partner {path} but Type is not set yet.", element, path);
+                    Log.Warning("NavigationProperty {element} has a Partner \"{path}\" but it's Type is not set.", element, path);
                     return;
                 }
                 element.Partner = resolver.Resolve<NavigationProperty>(element.Type, path);

@@ -45,7 +45,7 @@ public sealed class EntitySet(
 
     IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
+        yield return ("Name", Name);
         yield return ("EntityType", EntityType);
         yield return ("IncludeInServiceDocument", IncludeInServiceDocument);
     }

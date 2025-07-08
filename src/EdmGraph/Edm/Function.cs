@@ -7,9 +7,8 @@ public sealed class Function(
     string Name,
     bool IsBound = false,
     string? EntitySetPath = null,
-    bool IsComposable = false) : IEdmElement, IEdmElementFactory<Function>
+    bool IsComposable = false) : EdmElement(Name), IEdmElementFactory<Function>
 {
-    public string Name { get; } = Name;
     public bool IsBound { get; } = IsBound;
     public string? EntitySetPath { get; } = EntitySetPath;
     public bool IsComposable { get; } = IsComposable;
@@ -20,34 +19,7 @@ public sealed class Function(
     public IReadOnlyCollection<Parameter> Parameters => _parameters;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public ReturnType? ReturnType { get; private set; }
-    public Schema? ParentSchema { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => $".{Name}";
-    public IEdmElement? Parent => ParentSchema;
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
-
-    public IReadOnlyCollection<IEdmElement> Children 
-    {
-        get
-        {
-            var children = new List<IEdmElement>();
-            children.AddRange(_parameters.Cast<IEdmElement>());
-            children.AddRange(_annotations.Cast<IEdmElement>());
-            if (ReturnType != null)
-            {
-                // TODO: Add ReturnType back after it's refactored
-                // children.Add(ReturnType);
-            }
-            return children;
-        }
-    }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddParameter(Parameter parameter) 
     {
@@ -63,9 +35,31 @@ public sealed class Function(
         ReturnType = returnType;
     }
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentSchema;
+
+    public override IReadOnlyCollection<IEdmElement> Children 
     {
-        yield return ("Name", TargetPath);
+        get
+        {
+            var children = new List<IEdmElement>();
+            children.AddRange(_parameters.Cast<IEdmElement>());
+            children.AddRange(_annotations.Cast<IEdmElement>());
+            if (ReturnType != null)
+            {
+                // TODO: Add ReturnType back after it's refactored
+                // children.Add(ReturnType);
+            }
+            return children;
+        }
+    }
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
+    {
+        yield return ("Name", Name);
         yield return ("IsBound", IsBound);
         if (EntitySetPath != null)
         {
@@ -74,14 +68,7 @@ public sealed class Function(
         yield return ("IsComposable", IsComposable);
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static Function Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
@@ -91,14 +78,9 @@ public sealed class Function(
             startElement.Get("EntitySetPath", null),
             startElement.Parse<bool>("IsComposable"));
 
-        // TODO: check if parent is not null
+        if (parent is Schema schema)
         {
-            switch (parent)
-            {
-                case Schema schema:
-                    schema.AddFunction(function);
-                    break;
-            }
+            schema.AddFunction(function);
         }
 
         return function;

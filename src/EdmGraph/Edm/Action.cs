@@ -6,9 +6,8 @@ namespace EdmGraph.Edm;
 public sealed class Action(
     string Name,
     bool IsBound = false,
-    string? EntitySetPath = null) : IEdmElement, IEdmElementFactory<Action>
+    string? EntitySetPath = null) : EdmElement(Name), IEdmElementFactory<Action>
 {
-    public string Name { get; } = Name;
     public bool IsBound { get; } = IsBound;
     public string? EntitySetPath { get; } = EntitySetPath;
 
@@ -18,20 +17,27 @@ public sealed class Action(
     public IReadOnlyCollection<Parameter> Parameters => _parameters;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public ReturnType? ReturnType { get; private set; }
-    public Schema? ParentSchema { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => $".{Name}";
-    public IEdmElement? Parent => ParentSchema;
-    public LineInfo LineInfo { get; set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
     
-    public string TargetPath => Parent switch
+    internal void AddParameter(Parameter parameter) 
     {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+        parameter.ParentElement = this;
+        _parameters.Add(parameter);
+    }
+    
+    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
+    
+    internal void SetReturnType(ReturnType returnType) 
+    {
+        returnType.ParentElement = this;
+        ReturnType = returnType;
+    }
 
-    public IReadOnlyCollection<IEdmElement> Children 
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentSchema;
+
+    public override IReadOnlyCollection<IEdmElement> Children 
     {
         get
         {
@@ -48,23 +54,11 @@ public sealed class Action(
         }
     }
 
-    internal void AddParameter(Parameter parameter) 
-    {
-        parameter.ParentElement = this;
-        _parameters.Add(parameter);
-    }
-    
-    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
-    
-    internal void SetReturnType(ReturnType returnType) 
-    {
-        returnType.ParentElement = this;
-        ReturnType = returnType;
-    }
+    public override string TargetPathSegment => $".{Name}";
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
+        yield return ("Name", Name);
         yield return ("IsBound", IsBound);
         if (EntitySetPath != null)
         {
@@ -72,14 +66,7 @@ public sealed class Action(
         }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static Action Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
@@ -88,14 +75,9 @@ public sealed class Action(
             startElement.Parse<bool>("IsBound"),
             startElement.Get("EntitySetPath", null));
 
-        // TODO: check if parent is not null
+        if (parent is Schema schema)
         {
-            switch (parent)
-            {
-                case Schema schema:
-                    schema.AddAction(action);
-                    break;
-            }
+            schema.AddAction(action);
         }
 
         return action;

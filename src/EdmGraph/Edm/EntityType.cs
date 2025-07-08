@@ -7,9 +7,8 @@ public sealed class EntityType(
     string Name,
     bool Abstract = false,
     bool OpenType = false,
-    bool HasStream = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<EntityType>
+    bool HasStream = false) : EdmElement(Name), IEdmPropertyType, IEdmElementFactory<EntityType>
 {
-    public string Name { get; } = Name;
     public bool Abstract { get; } = Abstract;
     public bool OpenType { get; } = OpenType;
     public bool HasStream { get; } = HasStream;
@@ -24,38 +23,8 @@ public sealed class EntityType(
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
     public Key? Key { get; private set; }
-    public Schema? ParentSchema { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => $".{Name}";
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
     
-    public IEdmElement? Parent => ParentSchema;
-
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
-
-    public IReadOnlyCollection<IEdmElement> Children 
-    {
-        get
-        {
-            var children = new List<IEdmElement>();
-            children.AddRange(_properties.Cast<IEdmElement>());
-            // TODO: Add navigation properties back after they're refactored
-            // children.AddRange(_navigationProperties.Cast<IEdmElement>());
-            children.AddRange(_annotations.Cast<IEdmElement>());
-            if (Key != null)
-            {
-                children.Add(Key);
-            }
-            return children;
-        }
-    }
-
     internal void AddProperty(Property property)
     {
         property.ParentElement = this;
@@ -76,9 +45,32 @@ public sealed class EntityType(
         Key = key;
     }
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    #region EdmElement abstract member implementation
+    
+    public override IEdmElement Parent => ParentSchema;
+
+    public override IReadOnlyCollection<IEdmElement> Children 
     {
-        yield return ("Name", TargetPath);
+        get
+        {
+            var children = new List<IEdmElement>();
+            children.AddRange(_properties.Cast<IEdmElement>());
+            // TODO: Add navigation properties back after they're refactored
+            // children.AddRange(_navigationProperties.Cast<IEdmElement>());
+            children.AddRange(_annotations.Cast<IEdmElement>());
+            if (Key != null)
+            {
+                children.Add(Key);
+            }
+            return children;
+        }
+    }
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
+    {
+        yield return ("Name", Name);
         if (BaseType != null)
         {
             yield return ("BaseType", BaseType);
@@ -88,14 +80,7 @@ public sealed class EntityType(
         yield return ("HasStream", HasStream);
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static EntityType Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
@@ -105,14 +90,9 @@ public sealed class EntityType(
             startElement.Parse<bool>("OpenType"),
             startElement.Parse<bool>("HasStream"));
 
-        // TODO: check if parent is not null
+        if (parent is Schema schema)
         {
-            switch (parent)
-            {
-                case Schema schema:
-                    schema.AddEntityType(entityType);
-                    break;
-            }
+            schema.AddEntityType(entityType);
         }
 
         var baseType = startElement.Get("BaseType");
@@ -138,27 +118,12 @@ public interface IEntityTypeChildElement
 /// <summary>
 /// Represents an EDM Key for an Entity Type
 /// </summary>
-public sealed class Key() : IEdmElement, IEdmElementFactory<Key>
+public sealed class Key() : EdmElement("Key"), IEdmElementFactory<Key>
 {
-    public string Name => "Key";
-    
     private readonly List<PropertyRef> _propertyRefs = [];
 
     public IReadOnlyCollection<PropertyRef> PropertyRefs => _propertyRefs;
-    public EntityType? ParentEntityType { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => "/Key";
-    public IEdmElement? Parent => ParentEntityType;
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
-
-    public IReadOnlyCollection<IEdmElement> Children => _propertyRefs.Cast<IEdmElement>().ToList();
+    public EntityType ParentEntityType { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddPropertyRef(PropertyRef propertyRef)
     {
@@ -166,33 +131,29 @@ public sealed class Key() : IEdmElement, IEdmElementFactory<Key>
         _propertyRefs.Add(propertyRef);
     }
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentEntityType;
+
+    public override IReadOnlyCollection<IEdmElement> Children => _propertyRefs.Cast<IEdmElement>().ToList();
+
+    public override string TargetPathSegment => "/Key";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         // Key doesn't have additional basic properties beyond its name
         yield break;
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static Key Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var key = new Key();
 
-        // TODO: check if parent is not null
+        if (parent is EntityType entityType)
         {
-            switch (parent)
-            {
-                case EntityType entityType:
-                    entityType.SetKey(key);
-                    break;
-            }
+            entityType.SetKey(key);
         }
 
         return key;

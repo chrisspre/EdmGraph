@@ -3,49 +3,36 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Structural Property
 /// </summary>
-public sealed class Property(
-    string Name,
-    bool? Nullable,
-    int? MaxLength = null,
-    bool Unicode = true,
-    int? Precision = null,
-    Scale Scale = default,
-    int? SRID = null,
-    string? DefaultValue = null
-) 
-: IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<Property>
+public sealed class Property(string Name): EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<Property>
 {
-    public string Name { get; } = Name;
-    public bool? Nullable { get; } = Nullable;
-    public int? MaxLength { get; } = MaxLength;
-    public bool Unicode { get; } = Unicode;
-    public int? Precision { get; } = Precision;
-    public Scale Scale { get; } = Scale;
-    public int? SRID { get; } = SRID;
-    public string? DefaultValue { get; } = DefaultValue;
+    public bool Nullable { get; internal set; }
+    public int? MaxLength { get; internal set; }
+    public bool Unicode { get; internal set; }
+    public int? Precision { get; internal set; }
+    public Scale? Scale { get; internal set; }
+    public int? SRID { get; internal set; }
+    public string? DefaultValue { get; internal set; }
+
     public bool IsCollection { get; internal set; }
+
     public IEdmPropertyType Type { get; internal set; } = null!;
 
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public IEdmElement? ParentElement { get; internal set; }
-
-    // IEdmElement implementation
-    public string TargetPathSegment => $"/{Name}";
-    public IEdmElement? Parent => ParentElement;
-    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+    public IEdmElement ParentElement { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentElement;
+
+    public override IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return (nameof(Name), Name);
         if (Nullable ?? true) { yield return (nameof(Nullable), Nullable); }
@@ -57,39 +44,31 @@ public sealed class Property(
         if (DefaultValue != null) { yield return (nameof(DefaultValue), DefaultValue); }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static Property Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
-        var property = new Property(
-            startElement.Get("Name"),
-            startElement.ParseNullable<bool>("Nullable"),
-            startElement.ParseNullable<int>("MaxLength"),
-            startElement.Parse<bool>("Unicode", true),
-            startElement.ParseNullable<int>("Precision"),
-            startElement.Parse<Scale>("Scale"),
-            startElement.ParseNullable<int>("SRID"),
-            startElement.Get("DefaultValue", null));
+        var property = new Property(startElement.Get("Name"));
 
-        // TODO: check if parent is not null
+        // Initialize nullable and facets from attributes
+        property.Nullable = startElement.ParseNullable<bool>("Nullable") ?? false;
+        property.MaxLength = startElement.ParseNullable<int>("MaxLength");
+        property.Unicode = startElement.ParseNullable<bool>("Unicode") ?? false;
+        property.Precision = startElement.ParseNullable<int>("Precision");
+        property.Scale = startElement.ParseNullable<Scale>("Scale");
+        property.SRID = startElement.ParseNullable<int>("SRID");
+        property.DefaultValue = startElement.Get("DefaultValue");
+
+        switch (parent)
         {
-            switch (parent)
-            {
-                case EntityType entityType:
-                    entityType.AddProperty(property);
-                    break;
-                case ComplexType complexType:
-                    complexType.AddProperty(property);
-                    break;
-            }
+            case EntityType entityType:
+                entityType.AddProperty(property);
+                break;
+            case ComplexType complexType:
+                complexType.AddProperty(property);
+                break;
         }
+
         actions.Add(Priorities.Type, property, startElement.Get("Type"), SetTypeAction);
         return property;
 

@@ -32,7 +32,7 @@ public sealed class ActionImport(string Name, string Action, string? EntitySet =
 
     IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
+        yield return ("Name", Name);
         yield return ("Action", Action);
         if (EntitySet != null)
         {

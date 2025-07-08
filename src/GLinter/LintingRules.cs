@@ -1,6 +1,6 @@
 namespace GLinter;
 
-using System;
+using EdmGraph;
 using EdmGraph.Edm;
 
 public static class LintingRules
@@ -15,7 +15,7 @@ public static class LintingRules
               from member in enumType.Members
               let val = member.Value
               where val.HasValue && !(val.Value == 0 || System.Numerics.BitOperations.PopCount(val.Value) == 1)
-              select (((IEdmElement)member).Name, val);
+              select (member.Name, val);
 
         if (invalidValues.Any())
         {

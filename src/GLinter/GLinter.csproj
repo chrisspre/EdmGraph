@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EdmGraph\EdmGraph.csproj" />
-    <ProjectReference Include="..\MermaidGen\MermaidGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

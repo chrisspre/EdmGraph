@@ -1,5 +1,4 @@
-namespace EdmGraph;
-using EdmGraph.Edm;
+namespace EdmGraph.Edm;
 
 public static class PrimitiveTypes
 {

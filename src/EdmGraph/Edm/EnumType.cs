@@ -8,7 +8,7 @@ namespace EdmGraph.Edm;
 public sealed class EnumType(
     string Name,
     UnderlyingIntegerType UnderlyingType,
-    bool IsFlags = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<EnumType>
+    bool IsFlags = false) : EdmElement(Name), IEdmPropertyType, IEdmElementFactory<EnumType>
 {
     public UnderlyingIntegerType UnderlyingType { get; } = UnderlyingType;
     public bool IsFlags { get; } = IsFlags;
@@ -19,7 +19,7 @@ public sealed class EnumType(
     public IReadOnlyCollection<Member> Members => _members;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public Schema? ParentSchema { get; internal set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddMember(Member member)
     {
@@ -27,19 +27,23 @@ public sealed class EnumType(
         _members.Add(member);
     }
 
-    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
-
-    #region IEdmElement
-
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentSchema;
-    string IEdmElement.TargetPathSegment => $".{Name}";
-    LineInfo IEdmElement.LineInfo { get; set; } = new();
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _members, .. _annotations];
-
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    internal void AddAnnotation(Annotation annotation)
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
+        _annotations.Add(annotation);
+        annotation.ParentElement = this;
+    }
+
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentSchema;
+
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _members, .. _annotations];
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
+    {
+        yield return ("Name", Name);
         yield return ("UnderlyingType", UnderlyingType);
         yield return ("IsFlags", IsFlags);
     }
@@ -66,38 +70,33 @@ public sealed class EnumType(
 /// <summary>
 /// Represents a Member of an Enumeration Type
 /// </summary>
-public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmElementFactory<Member>
+public sealed class Member(string Name, uint? Value = null) : EdmElement(Name), IEdmElementFactory<Member>
 {
     public uint? Value { get; } = Value;
 
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public EnumType? ParentEnumType { get; internal set; }
+    public EnumType ParentEnumType { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    #region IEdmElement
 
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentEnumType;
-    string IEdmElement.TargetPathSegment => $"/{Name}";
-    LineInfo IEdmElement.LineInfo { get; set; } = new();
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
-        .. _annotations,
-    ];
+    #region EdmElement abstract member implementation
+    public override IEdmElement Parent => ParentEnumType;
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
-        if (Value != null)
-        {
-            yield return ("Value", Value);
-        }
+        yield return ("Name", Name);
+        if (Value.HasValue) yield return ("Value", Value.Value);
     }
 
     #endregion
-
+    
     public static Member Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var member = new Member(

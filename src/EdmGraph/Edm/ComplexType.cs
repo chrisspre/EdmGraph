@@ -7,13 +7,13 @@ public sealed class ComplexType(
     string Name,
     string? BaseType = null,
     bool IsAbstract = false,
-    bool OpenType = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<ComplexType>
+    bool OpenType = false) : EdmElement(Name), IEdmPropertyType, IEdmElementFactory<ComplexType>
 {
     public string? BaseType { get; } = BaseType;
     public bool IsAbstract { get; } = IsAbstract;
     public bool OpenType { get; } = OpenType;
 
-    public Schema? ParentSchema { get; internal set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<Property> _properties = [];
     private readonly List<NavigationProperty> _navigationProperties = [];
@@ -41,19 +41,21 @@ public sealed class ComplexType(
         _annotations.Add(annotation);
     }
 
-    #region IEdmElement
-    public LineInfo LineInfo { get;  set; }
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentSchema;
-    string IEdmElement.TargetPathSegment => $".{Name}";
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentSchema;
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IReadOnlyCollection<IEdmElement> Children => [
         .. _properties,
         .. _navigationProperties,
         .. _annotations
     ];
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
+        yield return ("Name", Name);
         if (BaseType != null)
         {
             yield return ("BaseType", BaseType);
