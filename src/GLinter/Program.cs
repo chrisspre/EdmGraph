@@ -1,9 +1,7 @@
-namespace EdmGraph.Console;
+namespace GLinter;
 
 using EdmGraph;
-using EdmGraph.Edm;
 using Serilog;
-using System; // allows to write Console.WriteLine
 
 class Program
 {
@@ -13,9 +11,8 @@ class Program
         string[] paths = [
             @"..\..\data\example89.xml",
             // @"..\..\data\microsoft-graph.xml",
-            // @"..\..\data\reporting-line.xml",
+            @"..\..\data\reporting-line.xml",
         ];
-
 
         foreach (var path in paths)
         {

@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntitySet(
     string Name,
-    bool IncludeInServiceDocument = true) : IEdmElement, IEdmElementCreator<EntitySet>
+    bool IncludeInServiceDocument = true) : IEdmElement, IEdmElementFactory<EntitySet>
 {
     public bool IncludeInServiceDocument { get; } = IncludeInServiceDocument;
 
@@ -52,14 +52,14 @@ public sealed class EntitySet(
 
     #endregion
 
-    public static EntitySet Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static EntitySet Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var entitySet = new EntitySet(
            startElement.Get("Name"),
            
            startElement.Parse<bool>("IncludeInServiceDocument", true));
 
-        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        if (parent is EntityContainer entityContainer)
         {
             entityContainer.AddEntitySet(entitySet);
         }

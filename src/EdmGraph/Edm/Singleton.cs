@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 public sealed class Singleton(
     string Name,
     string Type,
-    bool Nullable = false) : IEdmElement, IEdmElementCreator<Singleton>
+    bool Nullable = false) : IEdmElement, IEdmElementFactory<Singleton>
 {
     public string Name { get; } = Name;
     public string Type { get; } = Type;
@@ -60,7 +60,7 @@ public sealed class Singleton(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Singleton Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Singleton Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var singleton = new Singleton(
             startElement.Get("Name"),
@@ -69,7 +69,7 @@ public sealed class Singleton(
             LineInfo = startElement.LineInfo
         };
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

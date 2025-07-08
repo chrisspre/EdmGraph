@@ -14,7 +14,7 @@ public sealed class Term(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementCreator<Term>
+    int? SRID = null) : IEdmElement, IEdmElementFactory<Term>
 {
     public string Name { get; } = Name;
     public string Type { get; } = Type;
@@ -92,7 +92,7 @@ public sealed class Term(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Term Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Term Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var term = new Term(
             startElement.Get("Name"),
@@ -102,7 +102,7 @@ public sealed class Term(
             startElement.Get("DefaultValue", null),
             startElement.Parse<bool>("Nullable", true));
 
-        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        if (parent is Schema schema)
         {
             schema.AddTerm(term);
         }

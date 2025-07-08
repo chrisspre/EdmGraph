@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Annotation
 /// </summary>
-public sealed class Annotation(string? Qualifier = null) : IEdmElement, IEdmElementCreator<Annotation>
+public sealed class Annotation(string? Qualifier = null) : IEdmElement, IEdmElementFactory<Annotation>
 {
     public Term Term { get; internal set; } = default!;
     
@@ -100,13 +100,13 @@ public sealed class Annotation(string? Qualifier = null) : IEdmElement, IEdmElem
         return $@"<{GetType().Name} {propertyString} \>";
     }
 
-    public static Annotation Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Annotation Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var annotation = new Annotation(
                 startElement.Get("Qualifier", null));
 
         // Handle the most common parent types that support annotations
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

@@ -9,7 +9,7 @@ namespace EdmGraph.Edm;
 public sealed class NavigationProperty(
     string Name,
     bool? Nullable = default,
-    bool ContainsTarget = false) : IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator<NavigationProperty>
+    bool ContainsTarget = false) : IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<NavigationProperty>
 {
     private readonly List<ReferentialConstraint> _referentialConstraints = [];
     private readonly List<Annotation> _annotations = [];
@@ -62,14 +62,14 @@ public sealed class NavigationProperty(
 
     #endregion
 
-    public static NavigationProperty Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static NavigationProperty Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var navigationProperty = new NavigationProperty(
             startElement.Get("Name"),
             startElement.ParseNullable<bool>("Nullable"),
             startElement.Parse<bool>("ContainsTarget", false))       ;
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {
@@ -123,7 +123,7 @@ public sealed class NavigationProperty(
 /// <summary>
 /// Represents a Referential Constraint on a Navigation Property
 /// </summary>
-public sealed class ReferentialConstraint() : IEdmElement, IEdmElementCreator<ReferentialConstraint>
+public sealed class ReferentialConstraint() : IEdmElement, IEdmElementFactory<ReferentialConstraint>
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -148,11 +148,11 @@ public sealed class ReferentialConstraint() : IEdmElement, IEdmElementCreator<Re
 
     #endregion
 
-    public static ReferentialConstraint Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static ReferentialConstraint Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var referentialConstraint = new ReferentialConstraint();
 
-        if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
+        if (parent is NavigationProperty navigationProperty)
         {
             navigationProperty.AddReferentialConstraint(referentialConstraint);
         }
@@ -164,7 +164,7 @@ public sealed class ReferentialConstraint() : IEdmElement, IEdmElementCreator<Re
 /// <summary>
 /// Represents an On-Delete Action for a Navigation Property
 /// </summary>
-public sealed class OnDelete(string Action) : IEdmElement, IEdmElementCreator<OnDelete>
+public sealed class OnDelete(string Action) : IEdmElement, IEdmElementFactory<OnDelete>
 {
     private readonly List<Annotation> _annotations = [];
 
@@ -191,11 +191,11 @@ public sealed class OnDelete(string Action) : IEdmElement, IEdmElementCreator<On
 
     #endregion
 
-    public static OnDelete Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static OnDelete Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var onDelete = new OnDelete(startElement.Get("Action"));
 
-        if (stack.TryPeek(out var parent) && parent is NavigationProperty navigationProperty)
+        if (parent is NavigationProperty navigationProperty)
         {
             navigationProperty.SetOnDelete(onDelete);
         }

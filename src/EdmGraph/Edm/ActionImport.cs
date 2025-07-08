@@ -3,7 +3,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Action Import
 /// </summary>
-public sealed class ActionImport(string Name, string Action, string? EntitySet = null) : IEdmElement, IEdmElementCreator<ActionImport>
+public sealed class ActionImport(string Name, string Action, string? EntitySet = null) : IEdmElement, IEdmElementFactory<ActionImport>
 {
     public EntityContainer? ParentEntityContainer { get; internal set; }
 
@@ -42,14 +42,14 @@ public sealed class ActionImport(string Name, string Action, string? EntitySet =
 
     #endregion
 
-    public static ActionImport Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static ActionImport Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var actionImport = new ActionImport(
             startElement.Get("Name"),
             startElement.Get("Action"),
             startElement.Get("EntitySet", null));
 
-        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        if (parent is EntityContainer entityContainer)
         {
             entityContainer.AddActionImport(actionImport);
         }

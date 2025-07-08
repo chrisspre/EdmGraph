@@ -8,7 +8,7 @@ namespace EdmGraph.Edm;
 public sealed class EnumType(
     string Name,
     UnderlyingIntegerType UnderlyingType,
-    bool IsFlags = false) : IEdmElement, IEdmPropertyType, IEdmElementCreator<EnumType>
+    bool IsFlags = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<EnumType>
 {
     public UnderlyingIntegerType UnderlyingType { get; } = UnderlyingType;
     public bool IsFlags { get; } = IsFlags;
@@ -46,7 +46,7 @@ public sealed class EnumType(
 
     #endregion
 
-    public static EnumType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static EnumType Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         // https://docs.oasis-open.org/odata/odata-csdl-xml/v4.02/csd01/odata-csdl-xml-v4.02-csd01.html#ElementedmEnumType.17
         var enumType = new EnumType(
@@ -54,7 +54,7 @@ public sealed class EnumType(
                 startElement.Parse<UnderlyingIntegerType>("UnderlyingType"),
                 startElement.Parse<bool>("IsFlags"));
 
-        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        if (parent is Schema schema)
         {
             schema.AddEnumType(enumType);
         }
@@ -66,7 +66,7 @@ public sealed class EnumType(
 /// <summary>
 /// Represents a Member of an Enumeration Type
 /// </summary>
-public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmElementCreator<Member>
+public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmElementFactory<Member>
 {
     public uint? Value { get; } = Value;
 
@@ -98,13 +98,13 @@ public sealed class Member(string Name, uint? Value = null) : IEdmElement, IEdmE
 
     #endregion
 
-    public static Member Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Member Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var member = new Member(
             startElement.Get("Name"),
             startElement.ParseNullable<uint>("Value"));
 
-        if (stack.TryPeek(out var parent) && parent is EnumType enumType)
+        if (parent is EnumType enumType)
         {
             enumType.AddMember(member);
         }

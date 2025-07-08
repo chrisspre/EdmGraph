@@ -7,7 +7,7 @@ public sealed class Function(
     string Name,
     bool IsBound = false,
     string? EntitySetPath = null,
-    bool IsComposable = false) : IEdmElement, IEdmElementCreator<Function>
+    bool IsComposable = false) : IEdmElement, IEdmElementFactory<Function>
 {
     public string Name { get; } = Name;
     public bool IsBound { get; } = IsBound;
@@ -83,7 +83,7 @@ public sealed class Function(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Function Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Function Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var function = new Function(
             startElement.Get("Name"),
@@ -91,7 +91,7 @@ public sealed class Function(
             startElement.Get("EntitySetPath", null),
             startElement.Parse<bool>("IsComposable"));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

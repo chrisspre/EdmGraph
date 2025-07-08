@@ -4,7 +4,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Navigation Property Binding
 /// </summary>
-public sealed class NavigationPropertyBinding(string Path, string Target) : IEdmElement, IEdmElementCreator<NavigationPropertyBinding>
+public sealed class NavigationPropertyBinding(string Path, string Target) : IEdmElement, IEdmElementFactory<NavigationPropertyBinding>
 {
     public string Path { get; } = Path;
     public string Target { get; } = Target;
@@ -33,13 +33,13 @@ public sealed class NavigationPropertyBinding(string Path, string Target) : IEdm
 
     #endregion
 
-    public static NavigationPropertyBinding Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static NavigationPropertyBinding Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var navigationPropertyBinding = new NavigationPropertyBinding(
            startElement.Get("Path"),
            startElement.Get("Target"));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

@@ -13,7 +13,7 @@ public sealed class Property(
     int? SRID = null,
     string? DefaultValue = null
 ) 
-: IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementCreator<Property>
+: IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<Property>
 {
     public string Name { get; } = Name;
     public bool? Nullable { get; } = Nullable;
@@ -66,7 +66,7 @@ public sealed class Property(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Property Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Property Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var property = new Property(
             startElement.Get("Name"),
@@ -78,7 +78,7 @@ public sealed class Property(
             startElement.ParseNullable<int>("SRID"),
             startElement.Get("DefaultValue", null));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

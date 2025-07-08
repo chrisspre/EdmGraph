@@ -12,7 +12,7 @@ public sealed class Parameter(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementCreator<Parameter>
+    int? SRID = null) : IEdmElement, IEdmElementFactory<Parameter>
 {
     public string Name { get; } = Name;
     public IEdmPropertyType Type { get; internal set; } = default!; // Set by ModelBuilder
@@ -75,13 +75,13 @@ public sealed class Parameter(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Parameter Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Parameter Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var parameter = new Parameter(
             startElement.Get("Name"),
             startElement.Parse<bool>("Nullable", true));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

@@ -7,7 +7,7 @@ public sealed class ComplexType(
     string Name,
     string? BaseType = null,
     bool IsAbstract = false,
-    bool OpenType = false) : IEdmElement, IEdmPropertyType, IEdmElementCreator<ComplexType>
+    bool OpenType = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<ComplexType>
 {
     public string? BaseType { get; } = BaseType;
     public bool IsAbstract { get; } = IsAbstract;
@@ -64,7 +64,7 @@ public sealed class ComplexType(
 
     #endregion
 
-    public static ComplexType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static ComplexType Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var complexType = new ComplexType(
             startElement.Get("Name"),
@@ -72,7 +72,7 @@ public sealed class ComplexType(
             startElement.Parse<bool>("Abstract", false),
             startElement.Parse<bool>("OpenType", false));
 
-        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        if (parent is Schema schema)
         {
             schema.AddComplexType(complexType);
         }

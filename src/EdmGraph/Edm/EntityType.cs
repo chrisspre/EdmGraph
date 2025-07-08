@@ -7,7 +7,7 @@ public sealed class EntityType(
     string Name,
     bool Abstract = false,
     bool OpenType = false,
-    bool HasStream = false) : IEdmElement, IEdmPropertyType, IEdmElementCreator<EntityType>
+    bool HasStream = false) : IEdmElement, IEdmPropertyType, IEdmElementFactory<EntityType>
 {
     public string Name { get; } = Name;
     public bool Abstract { get; } = Abstract;
@@ -97,7 +97,7 @@ public sealed class EntityType(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static EntityType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static EntityType Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var entityType = new EntityType(
             startElement.Get("Name"),
@@ -105,7 +105,7 @@ public sealed class EntityType(
             startElement.Parse<bool>("OpenType"),
             startElement.Parse<bool>("HasStream"));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {
@@ -138,7 +138,7 @@ public interface IEntityTypeChildElement
 /// <summary>
 /// Represents an EDM Key for an Entity Type
 /// </summary>
-public sealed class Key() : IEdmElement, IEdmElementCreator<Key>
+public sealed class Key() : IEdmElement, IEdmElementFactory<Key>
 {
     public string Name => "Key";
     
@@ -181,11 +181,11 @@ public sealed class Key() : IEdmElement, IEdmElementCreator<Key>
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Key Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Key Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var key = new Key();
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {
@@ -204,7 +204,7 @@ public sealed class Key() : IEdmElement, IEdmElementCreator<Key>
 /// <summary>
 /// Represents a Property Reference in a Key
 /// </summary>
-public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElementCreator<PropertyRef>
+public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElementFactory<PropertyRef>
 {
     public string Name => "PropertyRef";
     public string? Alias { get; } = Alias;
@@ -240,11 +240,11 @@ public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElement
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static PropertyRef Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static PropertyRef Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var propertyRef = new PropertyRef(startElement.Get("Alias"));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

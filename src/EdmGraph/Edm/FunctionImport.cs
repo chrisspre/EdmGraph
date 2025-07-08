@@ -4,7 +4,7 @@ namespace EdmGraph.Edm;
 /// Represents an EDM Function Import
 /// </summary>
 public sealed class FunctionImport(string Name, string Function, string? EntitySet = null, bool IncludeInServiceDocument = false) 
-    : IEdmElement, IEdmElementCreator<FunctionImport>
+    : IEdmElement, IEdmElementFactory<FunctionImport>
 {
     public string Function { get; } = Function;
     public string? EntitySet { get; } = EntitySet;
@@ -45,7 +45,7 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
 
     #endregion
 
-    public static FunctionImport Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static FunctionImport Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var functionImport = new FunctionImport(
            startElement.Get("Name"),
@@ -53,7 +53,7 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
            startElement.Get("EntitySet", null),
            startElement.Parse<bool>("IncludeInServiceDocument", false));
 
-        if (stack.TryPeek(out var parent) && parent is EntityContainer entityContainer)
+        if (parent is EntityContainer entityContainer)
         {
             entityContainer.AddFunctionImport(functionImport);
         }

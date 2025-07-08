@@ -1,4 +1,4 @@
-namespace EdmGraph.Console;
+namespace GLinter;
 
 using EdmGraph.Edm;
 

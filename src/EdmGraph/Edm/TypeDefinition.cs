@@ -12,7 +12,7 @@ public sealed class TypeDefinition(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementCreator<TypeDefinition>
+    int? SRID = null) : IEdmElement, IEdmElementFactory<TypeDefinition>
 {
     public string Name { get; } = Name;
     public string UnderlyingType { get; } = UnderlyingType;
@@ -73,7 +73,7 @@ public sealed class TypeDefinition(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static TypeDefinition Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static TypeDefinition Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var typeDefinition = new TypeDefinition(
             startElement.Get("Name"),
@@ -88,7 +88,7 @@ public sealed class TypeDefinition(
             LineInfo = startElement.LineInfo
         };
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

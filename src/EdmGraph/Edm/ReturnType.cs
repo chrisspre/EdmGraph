@@ -10,7 +10,7 @@ public sealed class ReturnType(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementCreator<ReturnType>
+    int? SRID = null) : IEdmElement, IEdmElementFactory<ReturnType>
 {
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
@@ -67,13 +67,13 @@ public sealed class ReturnType(
 
     #endregion
 
-    public static ReturnType Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static ReturnType Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var returnType = new ReturnType(
             startElement.Get("Type"),
             startElement.Parse<bool>("Nullable", true));
 
-        if (stack.TryPeek(out var parent) && parent is Function function)
+        if (parent is Function function)
         {
             function.SetReturnType(returnType);
         }

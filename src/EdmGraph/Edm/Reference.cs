@@ -4,7 +4,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDMX Reference
 /// </summary>
-public sealed class Reference(string Uri) : IEdmElement, IEdmElementCreator<Reference>
+public sealed class Reference(string Uri) : IEdmElement, IEdmElementFactory<Reference>
 {
     public string Uri { get; } = Uri;
     public Edmx? ParentEdmx { get; internal set; }
@@ -53,18 +53,13 @@ public sealed class Reference(string Uri) : IEdmElement, IEdmElementCreator<Refe
         annotation.ParentElement = this;
     }
 
-    public static Reference Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Reference Create(CsdlToken.StartElement startElement, IEdmElement? parent, DeferredActionRegistry actions)
     {
         var reference = new Reference(startElement.Get("Uri"));
 
-        if (stack.TryPeek(out var parent))
+        if (parent is Edmx edmx)
         {
-            switch (parent)
-            {
-                case Edmx edmx:
-                    edmx.AddReference(reference);
-                    break;
-            }
+            edmx.AddReference(reference);
         }
 
         return reference;
@@ -74,7 +69,7 @@ public sealed class Reference(string Uri) : IEdmElement, IEdmElementCreator<Refe
 /// <summary>
 /// Represents an EDMX Include
 /// </summary>
-public sealed class Include(string Namespace, string? Alias = null) : IEdmElement, IEdmElementCreator<Include>
+public sealed class Include(string Namespace, string? Alias = null) : IEdmElement, IEdmElementFactory<Include>
 {
     public string Namespace { get; } = Namespace;
 
@@ -110,13 +105,13 @@ public sealed class Include(string Namespace, string? Alias = null) : IEdmElemen
         annotation.ParentElement = this;
     }
 
-    public static Include Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Include Create(CsdlToken.StartElement startElement, IEdmElement? parent, DeferredActionRegistry actions)
     {
         var include = new Include(
            startElement.Get("Namespace"),
            startElement.Get("Alias", null));
 
-        if (stack.TryPeek(out var parent) && parent is Reference reference)
+        if (parent is Reference reference)
         {
             reference.AddInclude(include);
         }
@@ -129,7 +124,7 @@ public sealed class Include(string Namespace, string? Alias = null) : IEdmElemen
 /// Represents an EDMX IncludeAnnotations
 /// </summary>
 public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier = null, string? TargetNamespace = null) 
-    : IEdmElement, IEdmElementCreator<IncludeAnnotations>
+    : IEdmElement, IEdmElementFactory<IncludeAnnotations>
 {
     public string TermNamespace { get; } = TermNamespace;
     public string? Qualifier { get; } = Qualifier;
@@ -160,14 +155,14 @@ public sealed class IncludeAnnotations(string TermNamespace, string? Qualifier =
 
     #endregion
 
-    public static IncludeAnnotations Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static IncludeAnnotations Create(CsdlToken.StartElement startElement, IEdmElement? parent, DeferredActionRegistry actions)
     {
         var includeAnnotations = new IncludeAnnotations(
             startElement.Get("TermNamespace"),
             startElement.Get("Qualifier", null),
             startElement.Get("TargetNamespace", null));
 
-        if (stack.TryPeek(out var parent) && parent is Reference reference)
+        if (parent is Reference reference)
         {
             reference.AddIncludeAnnotations(includeAnnotations);
         }

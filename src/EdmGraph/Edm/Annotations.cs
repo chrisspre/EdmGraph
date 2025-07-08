@@ -3,7 +3,7 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Annotations element for external targeting
 /// </summary>
-public sealed class Annotations(string Target, string? Qualifier = null) : IEdmElement, IEdmElementCreator<Annotations>
+public sealed class Annotations(string Target, string? Qualifier = null) : IEdmElement, IEdmElementFactory<Annotations>
 {
     public string Target { get; } = Target;
     public string? Qualifier { get; } = Qualifier;
@@ -42,13 +42,13 @@ public sealed class Annotations(string Target, string? Qualifier = null) : IEdmE
 
     #endregion
 
-    public static Annotations Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Annotations Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var annotations = new Annotations(
            startElement.Get("Target"),
            startElement.Get("Qualifier", null));
 
-        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        if (parent is Schema schema)
         {
             schema.AddAnnotations(annotations);
         }

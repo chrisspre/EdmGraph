@@ -6,7 +6,7 @@ namespace EdmGraph.Edm;
 public sealed class Action(
     string Name,
     bool IsBound = false,
-    string? EntitySetPath = null) : IEdmElement, IEdmElementCreator<Action>
+    string? EntitySetPath = null) : IEdmElement, IEdmElementFactory<Action>
 {
     public string Name { get; } = Name;
     public bool IsBound { get; } = IsBound;
@@ -81,14 +81,14 @@ public sealed class Action(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static Action Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static Action Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var action = new Action(
             startElement.Get("Name"),
             startElement.Parse<bool>("IsBound"),
             startElement.Get("EntitySetPath", null));
 
-        if (stack.TryPeek(out var parent))
+        // TODO: check if parent is not null
         {
             switch (parent)
             {

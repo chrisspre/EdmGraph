@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntityContainer(
     string Name,
-    string? Extends = null) : IEdmElement, IEdmElementCreator<EntityContainer>
+    string? Extends = null) : IEdmElement, IEdmElementFactory<EntityContainer>
 {
     public string Name { get; } = Name;
     public string? Extends { get; } = Extends;
@@ -94,13 +94,13 @@ public sealed class EntityContainer(
         return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
     }
 
-    public static EntityContainer Create(CsdlToken.StartElement startElement, Stack<IEdmElement> stack, DeferredActionRegistry actions)
+    public static EntityContainer Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var entityContainer = new EntityContainer(
             startElement.Get("Name"),
             startElement.Get("Extends", null));
 
-        if (stack.TryPeek(out var parent) && parent is Schema schema)
+        if (parent is Schema schema)
         {
             schema.AddEntityContainer(entityContainer);
         }

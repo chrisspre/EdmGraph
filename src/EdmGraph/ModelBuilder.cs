@@ -33,108 +33,108 @@ public static class ModelBuilder
             {
                 case CsdlToken.StartElement startElement:
                     {
-                        IEdmElement? element = null;
-                        
+                        if (stack.Count == 0)
+                        {
+                            throw new InvalidOperationException($"Missing parent for start element: {startElement.Name}");
+                        }
+                        var parent = stack.Peek();
+
+                        IEdmElement element;
                         switch (startElement.Name)
                         {
                             case "Schema":
-                                element = Schema.Create(startElement, stack, actions);
+                                element = Schema.Create(startElement, parent, actions);
                                 break;
                             case "EntityType":
-                                element = EntityType.Create(startElement, stack, actions);
+                                element = EntityType.Create(startElement, parent, actions);
                                 break;
                             case "ComplexType":
-                                element = ComplexType.Create(startElement, stack, actions);
+                                element = ComplexType.Create(startElement, parent, actions);
                                 break;
                             case "Property":
-                                element = Property.Create(startElement, stack, actions);
+                                element = Property.Create(startElement, parent, actions);
                                 break;
                             case "NavigationProperty":
-                                element = NavigationProperty.Create(startElement, stack, actions);
+                                element = NavigationProperty.Create(startElement, parent, actions);
                                 break;
                             case "Key":
-                                element = Key.Create(startElement, stack, actions);
+                                element = Key.Create(startElement, parent, actions);
                                 break;
                             case "PropertyRef":
-                                element = PropertyRef.Create(startElement, stack, actions);
+                                element = PropertyRef.Create(startElement, parent, actions);
                                 break;
                             case "EnumType":
-                                element = EnumType.Create(startElement, stack, actions);
+                                element = EnumType.Create(startElement, parent, actions);
                                 break;
                             case "Member":
-                                element = Member.Create(startElement, stack, actions);
+                                element = Member.Create(startElement, parent, actions);
                                 break;
                             case "TypeDefinition":
-                                element = TypeDefinition.Create(startElement, stack, actions);
+                                element = TypeDefinition.Create(startElement, parent, actions);
                                 break;
                             case "Function":
-                                element = Function.Create(startElement, stack, actions);
+                                element = Function.Create(startElement, parent, actions);
                                 break;
                             case "Action":
-                                element = Action.Create(startElement, stack, actions);
+                                element = Action.Create(startElement, parent, actions);
                                 break;
                             case "Parameter":
-                                element = Parameter.Create(startElement, stack, actions);
+                                element = Parameter.Create(startElement, parent, actions);
                                 break;
                             case "ReturnType":
-                                element = ReturnType.Create(startElement, stack, actions);
+                                element = ReturnType.Create(startElement, parent, actions);
                                 break;
                             case "EntityContainer":
-                                element = EntityContainer.Create(startElement, stack, actions);
+                                element = EntityContainer.Create(startElement, parent, actions);
                                 break;
                             case "EntitySet":
-                                element = EntitySet.Create(startElement, stack, actions);
+                                element = EntitySet.Create(startElement, parent, actions);
                                 break;
                             case "Singleton":
-                                element = Singleton.Create(startElement, stack, actions);
+                                element = Singleton.Create(startElement, parent, actions);
                                 break;
                             case "FunctionImport":
-                                element = FunctionImport.Create(startElement, stack, actions);
+                                element = FunctionImport.Create(startElement, parent, actions);
                                 break;
                             case "ActionImport":
-                                element = ActionImport.Create(startElement, stack, actions);
+                                element = ActionImport.Create(startElement, parent, actions);
                                 break;
                             case "NavigationPropertyBinding":
-                                element = NavigationPropertyBinding.Create(startElement, stack, actions);
+                                element = NavigationPropertyBinding.Create(startElement, parent, actions);
                                 break;
                             case "ReferentialConstraint":
-                                element = ReferentialConstraint.Create(startElement, stack, actions);
+                                element = ReferentialConstraint.Create(startElement, parent, actions);
                                 break;
                             case "OnDelete":
-                                element = OnDelete.Create(startElement, stack, actions);
+                                element = OnDelete.Create(startElement, parent, actions);
                                 break;
                             case "Term":
-                                element = Term.Create(startElement, stack, actions);
+                                element = Term.Create(startElement, parent, actions);
                                 break;
                             case "Annotations":
-                                element = Annotations.Create(startElement, stack, actions);
+                                element = Annotations.Create(startElement, parent, actions);
                                 break;
                             case "Annotation":
-                                element = Annotation.Create(startElement, stack, actions);
+                                element = Annotation.Create(startElement, parent, actions);
                                 break;
                             case "Reference":
-                                element = Reference.Create(startElement, stack, actions);
+                                element = Reference.Create(startElement, parent, actions);
                                 break;
                             case "Include":
-                                element = Include.Create(startElement, stack, actions);
+                                element = Include.Create(startElement, parent, actions);
                                 break;
                             case "IncludeAnnotations":
-                                element = IncludeAnnotations.Create(startElement, stack, actions);
+                                element = IncludeAnnotations.Create(startElement, parent, actions);
                                 break;
                             default:
-                                // For unhandled elements, we still need to track them for proper nesting
-                                // but we don't create actual objects for them
                                 Log.Warning("Unhandled start element: {ElementName}", startElement.Name);
-                                break;
+                                continue; // Skip unhandled elements, but continue processing
                         }
 
-                        // Set LineInfo and push to stack if an element was created
-                        if (element != null)
-                        {
-                            element.LineInfo = startElement.LineInfo;
-                            stack.Push(element);
-                        }
-
+                        // Set LineInfo and push  the element to stack
+                        element.LineInfo = startElement.LineInfo;
+                        stack.Push(element);
+                        
                         break;
                     }
                 case CsdlToken.EndElement endElement:
