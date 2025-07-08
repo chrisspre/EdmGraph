@@ -26,6 +26,18 @@ public class Priorities
     public const int BaseType = 3;
     public const int PropertyRef = 4;
     public const int Partner = 5;
+
+    internal static string Name(int p)
+    {
+        return p switch {
+            Type => nameof(Type),
+            BaseType => nameof(Type),
+            PropertyRef => nameof(PropertyRef),
+            Partner => nameof(Partner),
+
+            _ => "Unknown",
+        };
+    }
 }
 
 public class DeferredActionRegistry
@@ -48,15 +60,15 @@ public class DeferredActionRegistry
     {
         var resolver = new Resolver(model);
 
-        while(_actions.TryDequeue(out var action, out var _))
+var current = -1;
+        while(_actions.TryDequeue(out var action, out var p))
         {        
+            if(p != current) {
+                Log.Information("processiong priority {p}", p, Priorities.Name(p));
+                current = p;
+            }
             action(resolver);
         }
-    }
-
-    internal void Add(object propertyRef1, PropertyRef propertyRef2, string v, Action<PropertyRef, string, IElementResolver> value)
-    {
-        throw new NotImplementedException();
     }
 
     internal class Resolver(DataServices dataServices) : IElementResolver
@@ -111,29 +123,5 @@ public class DeferredActionRegistry
                 return default(T)!;
             }
         }
-    }
-}
-
-public static class IResolverExtensions
-{
-    public static PropertyPath ResolvePropertyPath(this IElementResolver resolver, IEdmElement element, string path)
-    {
-        var segments = path.Split('/');
-        // assert segments.Length >= 1;
-
-        var current = element;
-        var prop = resolver.Resolve<IProperty>(current, segments[0]);
-        var result = new PropertyPath(prop);
-
-        // iterate over the remaining segments and r
-        // esolve each property based on the previous one's type
-        for (int i = 1; i < segments.Length; i++)
-        {
-            current = prop.Type;
-            prop = resolver.Resolve<Property>(current, segments[i]);
-            result.AddSegment(prop);
-        }
-
-        return result;
     }
 }

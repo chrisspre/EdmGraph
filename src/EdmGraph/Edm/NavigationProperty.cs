@@ -114,7 +114,7 @@ public sealed class NavigationProperty(
             element.Type = resolver.Resolve<EntityType>(path);
             if (element.Type is null)
             {
-                Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, element);
+                Log.Warning("'{path}' not found while trying to set the Type of {element}", path, element);
             }
         }
     }

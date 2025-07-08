@@ -108,9 +108,8 @@ public sealed class Parameter(
             parameter.Type = resolver.Resolve<IEdmPropertyType>(path);
             if (parameter.Type is null)
             {
-                Log.Warning("Element '{path}' not found while trying setting the Type property of {element}", path, parameter);
+                Log.Warning("'{path}' not found while trying to set the Type of {element}", path, parameter);
             }
-
             
         }
     }
