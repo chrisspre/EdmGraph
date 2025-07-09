@@ -102,4 +102,18 @@ public static class LintingRules
             yield return "Element name must be in camelCase.";
         }
     }
+
+    internal static IEnumerable<string> EntityTypesInheritingKeysFromBaseTypeMustNotHaveKeys(EntityType type)
+    {
+        if (type.BaseType == null ){
+            yield break; // No base type, nothing to check
+        }
+        var baseTypeKeys = type.BaseType.Key?.PropertyRefs.Select(pr => pr.Name) ?? Enumerable.Empty<string>();
+        var ownKeys = type.Key?.PropertyRefs.Select(pr => pr.Name) ?? Enumerable.Empty<string>();
+
+        if( baseTypeKeys.Any() && ownKeys.Any() )
+        {   
+            yield return $"Entity type '{type.Name}' inherits keys from base type '{type.BaseType.Name}' and must not have its own keys.";
+        }
+    }
 }
