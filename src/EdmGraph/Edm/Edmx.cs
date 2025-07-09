@@ -1,26 +1,34 @@
 
-
 namespace EdmGraph.Edm;
 
 /// <summary>
 /// Represents the root EDMX element
 /// </summary>
-public sealed class Edmx(string Version = "4.0") : IEdmElement
+public sealed class Edmx(string Version = "4.0") : EdmElement("Edmx")
 {
     private readonly List<Reference> _references = [];
 
     public IReadOnlyCollection<Reference> References => _references;
     public DataServices? DataServices { get; private set; }
 
-    public string Name { get; internal set; } = "Edmx";
-
-    public string TargetPathSegment => null!; // The Edmx element does not have a target path segment
-
-    public string? TargetPath => TargetPathSegment is null ? null : Parent?.TargetPath + TargetPathSegment;
-
     public string Version { get; } = Version;
 
-    public IEdmElement? Parent => null;
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => null!; // Root element has no parent
+
+    public override string TargetPathSegment => ""; // Root element has empty path segment
+
+    public override IReadOnlyCollection<IEdmElement> Children => DataServices is null 
+        ? _references.Cast<IEdmElement>().ToArray()
+        : [.. _references, DataServices];
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
+    {
+        yield return (nameof(Version), Version);
+    }
+
+    #endregion
 
     internal void AddReference(Reference reference)
     {
@@ -33,33 +41,14 @@ public sealed class Edmx(string Version = "4.0") : IEdmElement
         DataServices = dataServices;
         dataServices.ParentEdmx = this;
     }
-
-    public IReadOnlyCollection<IEdmElement> Children => [
-        .. _references,
-        .. (DataServices is null ? Enumerable.Empty<IEdmElement>() : [DataServices])
-    ];
-
-    public IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        yield return ("Version", Version);
-    }
-
-    public LineInfo LineInfo { get; set; }
-
-    public override string ToString()
-    {
-        var properties = GetBasicProperties();
-        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
-        return $@"<{GetType().Name} {propertyString} \>";
-    }
 }
 
 /// <summary>
 /// Represents the EDMX DataServices element
 /// </summary>
-public sealed class DataServices() : IEdmElement
+public sealed class DataServices() : EdmElement("DataServices")
 {
-    public Edmx? ParentEdmx { get; internal set; }
+    public Edmx ParentEdmx { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<Schema> _schemas = [];
 
@@ -69,21 +58,21 @@ public sealed class DataServices() : IEdmElement
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public string Name { get; internal set; } = "DataServices";
+    #region EdmElement abstract member implementation
 
-    public string TargetPathSegment => "";
+    public override IEdmElement Parent => ParentEdmx;
 
-    public string? TargetPath
+    public override string TargetPathSegment => "";
+
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _schemas];
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        get
-        {
-            if (TargetPathSegment is null)
-            {
-                return null;
-            }
-            return Parent?.TargetPath + TargetPathSegment;
-        }
+        // DataServices doesn't have additional basic properties beyond its name
+        yield break;
     }
+
+    #endregion
 
     internal void AddSchema(Schema schema)
     {
@@ -95,24 +84,5 @@ public sealed class DataServices() : IEdmElement
     {
         _annotations.Add(annotation);
         annotation.ParentElement = this;
-    }
-
-    public IEdmElement? Parent => ParentEdmx;
-
-    public IReadOnlyCollection<IEdmElement> Children => [.. _schemas];
-
-    public IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        // DataServices doesn't have additional basic properties beyond its name
-        yield break;
-    }
-
-    public LineInfo LineInfo { get; set; }
-
-    public override string ToString()
-    {
-        var properties = GetBasicProperties();
-        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
-        return $@"<{GetType().Name} {propertyString} \>";
     }
 }

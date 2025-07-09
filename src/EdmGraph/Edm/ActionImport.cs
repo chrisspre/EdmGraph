@@ -3,9 +3,9 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Action Import
 /// </summary>
-public sealed class ActionImport(string Name, string Action, string? EntitySet = null) : IEdmElement, IEdmElementFactory<ActionImport>
+public sealed class ActionImport(string Name, string Action, string? EntitySet = null) : EdmElement(Name), IEdmElementFactory<ActionImport>
 {
-    public EntityContainer? ParentEntityContainer { get; internal set; }
+    public EntityContainer ParentEntityContainer { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<Annotation> _annotations = [];
 
@@ -20,17 +20,15 @@ public sealed class ActionImport(string Name, string Action, string? EntitySet =
         annotation.ParentElement = this;
     }
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
-    string IEdmElement.TargetPathSegment => $"/{Name}";
-    LineInfo IEdmElement.LineInfo { get; set; } = new();
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
-        .. _annotations,
-    ];
+    public override IEdmElement Parent => ParentEntityContainer;
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", Name);
         yield return ("Action", Action);

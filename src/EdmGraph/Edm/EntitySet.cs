@@ -5,14 +5,14 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class EntitySet(
     string Name,
-    bool IncludeInServiceDocument = true) : IEdmElement, IEdmElementFactory<EntitySet>
+    bool IncludeInServiceDocument = true) : EdmElement(Name), IEdmElementFactory<EntitySet>
 {
     public bool IncludeInServiceDocument { get; } = IncludeInServiceDocument;
 
 
     public EntityType EntityType { get; private set; } = default!; // Set by ModelBuilder
 
-    public EntityContainer? ParentEntityContainer { get; internal set; }
+    public EntityContainer ParentEntityContainer { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<NavigationPropertyBinding> _navigationPropertyBindings = [];
     private readonly List<Annotation> _annotations = [];
@@ -32,18 +32,18 @@ public sealed class EntitySet(
         annotation.ParentElement = this;
     }
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
-    string IEdmElement.TargetPathSegment => $"/{Name}";
-    LineInfo IEdmElement.LineInfo { get; set; } = new();
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
+    public override IEdmElement Parent => ParentEntityContainer;
+
+    public override IReadOnlyCollection<IEdmElement> Children => [
         .. _navigationPropertyBindings,
         .. _annotations
     ];
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", Name);
         yield return ("EntityType", EntityType);

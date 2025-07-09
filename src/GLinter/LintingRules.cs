@@ -1,5 +1,6 @@
 namespace GLinter;
 
+using System;
 using EdmGraph;
 using EdmGraph.Edm;
 
@@ -23,32 +24,17 @@ public static class LintingRules
         }
     }
 
-    public static IEnumerable<string> DoNotUseOpenTypes(EntityType element)
-    {
-        if (element.OpenType)
-        {
-            yield return "Do not use open entity types.";
-        }
-    }
-
-    public static IEnumerable<string> DoNotUseOpenTypes(ComplexType element)
-    {
-        if (element.OpenType)
-        {
-            yield return "Do not use open complex types.";
-        }
-    }
 
     public static IEnumerable<string> CollectionsShouldNotBeNullable(Property element)
     {
-        if (element.IsCollection && (element.Nullable ?? false))
+        if (element.IsCollection && element.Nullable)
         {
             yield return "Collections Should not be nullable.";
         }
     }
     public static IEnumerable<string> PropertyTypeShouldNotBeANullableEnum(Property property)
     {
-        if ((property.Nullable ?? false) && property.Type is EnumType enumType)
+        if (property.Nullable  && property.Type is EnumType enumType)
         {
             yield return "Properties SHOULD not have nullable enum types. Add a 'none'/'null' member to the enum.";
         }
@@ -60,7 +46,7 @@ public static class LintingRules
         var parentTypeName = property.ParentElement?.Name!;
         if (property.Name.StartsWith(parentTypeName))
         {
-            yield return $"Property name should not repeat parent's name\"{parentTypeName}\" as a prefix.";
+            yield return $"Property name should not repeat parent's name \"{parentTypeName}\" as a prefix.";
         }
     }
 
@@ -89,6 +75,31 @@ public static class LintingRules
             var message = $"Prefer `created` over `create` or `creation` in name of property {name}. Suggestion: '{suggestion}'.";
 
             yield return message;
+        }
+    }
+
+
+    public static IEnumerable<string> DoNotUseOpenTypes(EntityType element)
+    {
+        if (element.OpenType)
+        {
+            yield return "Do not use open entity types.";
+        }
+    }
+
+    public static IEnumerable<string> DoNotUseOpenTypes(ComplexType element)
+    {
+        if (element.OpenType)
+        {
+            yield return "Do not use open complex types.";
+        }
+    }
+
+    internal static IEnumerable<string> NameMustBeCamelCase(IEdmElement element)
+    {
+        if (element is Property or NavigationProperty or EntityType or EnumType or ComplexType && !element.Name.IsCamelCase())
+        {
+            yield return "Element name must be in camelCase.";
         }
     }
 }

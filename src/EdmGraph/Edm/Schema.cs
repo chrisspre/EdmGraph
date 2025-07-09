@@ -5,7 +5,7 @@ namespace EdmGraph.Edm;
 /// </summary>
 public sealed class Schema(
     string Namespace,
-    string? Alias = null) : IEdmElement, IEdmElementFactory<Schema>
+    string? Alias = null) : EdmElement(Namespace), IEdmElementFactory<Schema>
 {
     public string? Alias { get; } = Alias;
 
@@ -31,26 +31,36 @@ public sealed class Schema(
     public IReadOnlyCollection<EntityContainer> EntityContainers => _entityContainers;
     public IReadOnlyCollection<Annotations> Annotations => _annotations;
 
-    public DataServices? ParentDataServices { get; internal set; }
+    public DataServices ParentDataServices { get; internal set; } = default!; // Set in ModelBuilder/Create
 
-    // IEdmElement implementation
-    public string Name { get; internal set; } = Namespace;
+    #region EdmElement abstract member implementation
 
-    public string TargetPathSegment => $"{Namespace}";
+    public override IEdmElement Parent => ParentDataServices;
 
-    public string? TargetPath
+    public override string TargetPathSegment => $"{Namespace}";
+
+    public override IReadOnlyCollection<IEdmElement> Children => [
+        .. _entityTypes,
+        .. _complexTypes,
+        .. _enumTypes,
+        .. _typeDefinitions,
+        .. _terms,
+        .. _actions,
+        .. _functions,
+        .. _entityContainers,
+        .. _annotations
+    ];
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        get
+        yield return (nameof(Namespace), Namespace);
+        if (Alias != null)
         {
-            if (TargetPathSegment is null)
-            {
-                return null;
-            }
-            return Parent?.TargetPath + TargetPathSegment;
+            yield return (nameof(Alias), Alias);
         }
     }
 
-    public IEdmElement? Parent => ParentDataServices;
+    #endregion
 
     internal void AddEntityType(EntityType entityType) 
     {
@@ -105,31 +115,14 @@ public sealed class Schema(
         _annotations.Add(annotations);
     }
 
-    public IReadOnlyCollection<IEdmElement> Children => [];
-
-    public IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        yield return ("Name", TargetPath);
-        if (Alias != null)
-        {
-            yield return ("Alias", Alias);
-        }
-    }
-
-    public LineInfo LineInfo { get; set; }
-
-    public override string ToString()
-    {
-        var properties = GetBasicProperties();
-        var propertyString = string.Join(", ", properties.Select(p => $"{p.Item1}={p.Item2}"));
-        return $@"<{GetType().Name} {propertyString} \>";
-    }
-
-    public static Schema Create(CsdlToken.StartElement startElement, IEdmElement? parent, DeferredActionRegistry actions)
+    public static Schema Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var schema = new Schema(
             startElement.Get("Namespace"),
-            startElement.Get("Alias", null));
+            startElement.Get("Alias", null))
+        {
+            LineInfo = startElement.LineInfo
+        };
 
         if (parent is DataServices dataServices)
         {
@@ -138,5 +131,4 @@ public sealed class Schema(
 
         return schema;
     }
-
 }

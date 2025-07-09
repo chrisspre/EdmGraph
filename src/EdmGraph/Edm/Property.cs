@@ -35,11 +35,11 @@ public sealed class Property(string Name): EdmElement(Name), IEntityTypeChildEle
     public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return (nameof(Name), Name);
-        if (Nullable ?? true) { yield return (nameof(Nullable), Nullable); }
+        if (Nullable) { yield return (nameof(Nullable), Nullable); }
         if (MaxLength.HasValue) { yield return (nameof(MaxLength), MaxLength.Value); }
         if (!Unicode) yield return (nameof(Unicode), Unicode);
         if (Precision.HasValue) { yield return (nameof(Precision), Precision.Value); }
-        if (!Scale.Equals(default(Scale))) { yield return (nameof(Scale), Scale); }
+        if (Scale != null && !Scale.Equals(default(Scale))) { yield return (nameof(Scale), Scale); }
         if (SRID.HasValue) { yield return (nameof(SRID), SRID.Value); }
         if (DefaultValue != null) { yield return (nameof(DefaultValue), DefaultValue); }
     }

@@ -3,12 +3,12 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Annotations element for external targeting
 /// </summary>
-public sealed class Annotations(string Target, string? Qualifier = null) : IEdmElement, IEdmElementFactory<Annotations>
+public sealed class Annotations(string Target, string? Qualifier = null) : EdmElement("Annotations"), IEdmElementFactory<Annotations>
 {
     public string Target { get; } = Target;
     public string? Qualifier { get; } = Qualifier;
 
-    public Schema? ParentSchema { get; internal set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<Annotation> _annotations = [];
 
@@ -20,23 +20,21 @@ public sealed class Annotations(string Target, string? Qualifier = null) : IEdmE
         annotation.ParentElement = this;
     }
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    public LineInfo LineInfo { get; set; }
+    public override IEdmElement Parent => ParentSchema;
 
-    string? IEdmElement.Name => "Annotations";
-    IEdmElement? IEdmElement.Parent => ParentSchema;
-    string IEdmElement.TargetPathSegment => $"/Annotations[@Target='{Target}']" +
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => $"/Annotations[@Target='{Target}']" +
         (Qualifier != null ? $"[@Qualifier='{Qualifier}']" : "");
-    
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Target", Target);
+        yield return (nameof(Target), Target);
         if (Qualifier != null)
         {
-            yield return ("Qualifier", Qualifier);
+            yield return (nameof(Qualifier), Qualifier);
         }
     }
 

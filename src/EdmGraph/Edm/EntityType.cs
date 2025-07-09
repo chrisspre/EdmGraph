@@ -49,22 +49,10 @@ public sealed class EntityType(
     
     public override IEdmElement Parent => ParentSchema;
 
-    public override IReadOnlyCollection<IEdmElement> Children 
-    {
-        get
-        {
-            var children = new List<IEdmElement>();
-            children.AddRange(_properties.Cast<IEdmElement>());
-            // TODO: Add navigation properties back after they're refactored
-            // children.AddRange(_navigationProperties.Cast<IEdmElement>());
-            children.AddRange(_annotations.Cast<IEdmElement>());
-            if (Key != null)
-            {
-                children.Add(Key);
-            }
-            return children;
-        }
-    }
+    public override IReadOnlyCollection<IEdmElement> Children => Key != null 
+        ? [ .. _properties, .. _navigationProperties, .. _annotations, Key ]
+        : [ .. _properties, .. _navigationProperties, .. _annotations ];
+        
 
     public override string TargetPathSegment => $".{Name}";
 
@@ -135,7 +123,7 @@ public sealed class Key() : EdmElement("Key"), IEdmElementFactory<Key>
 
     public override IEdmElement Parent => ParentEntityType;
 
-    public override IReadOnlyCollection<IEdmElement> Children => _propertyRefs.Cast<IEdmElement>().ToList();
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _propertyRefs];
 
     public override string TargetPathSegment => "/Key";
 
@@ -165,26 +153,21 @@ public sealed class Key() : EdmElement("Key"), IEdmElementFactory<Key>
 /// <summary>
 /// Represents a Property Reference in a Key
 /// </summary>
-public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElementFactory<PropertyRef>
+public sealed class PropertyRef(string? Alias = null) : EdmElement("PropertyRef"), IEdmElementFactory<PropertyRef>
 {
-    public string Name => "PropertyRef";
     public string? Alias { get; } = Alias;
-    public Key? ParentKey { get; internal set; }
-    public PropertyPath PropertyPath { get; internal set; } = null!; // Initialized later in ModelBuilder;
+    public Key ParentKey { get; internal set; } = default!; // Set in ModelBuilder/Create
+    public PropertyPath PropertyPath { get; internal set; } = null!; // Initialized later in ModelBuilder
 
-    // IEdmElement implementation
-    public string TargetPathSegment => null!; // PropertyRef does not have a target path segment on its own
-    public IEdmElement? Parent => ParentKey;
-    public IReadOnlyCollection<IEdmElement> Children => [];
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+    #region EdmElement abstract member implementation
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    public override IEdmElement Parent => ParentKey;
+
+    public override IReadOnlyCollection<IEdmElement> Children => [];
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         if (Alias != null)
         {
@@ -192,34 +175,22 @@ public sealed class PropertyRef(string? Alias = null) : IEdmElement, IEdmElement
         }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
+    #endregion
 
     public static PropertyRef Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var propertyRef = new PropertyRef(startElement.Get("Alias"));
 
-        // TODO: check if parent is not null
+        if (parent is Key key)
         {
-            switch (parent)
-            {
-                case Key key:
-                    key.AddPropertyRef(propertyRef);
-                    break;
-            }
+            key.AddPropertyRef(propertyRef);
         }
 
         //  Add deferred action for property reference resolution
         actions.Add(Priorities.PropertyRef, propertyRef, startElement.Get("Name"), static (element, path, resolver) =>
         {
-            // PrepertyRef `Name` are resolved starting with the EntityType of the Key or the PropertyRef
-            var name = resolver.ResolvePropertyPath(element.ParentKey!.ParentEntityType!, path);
+            // PropertyRef `Name` are resolved starting with the EntityType of the Key or the PropertyRef
+            var name = resolver.ResolvePropertyPath(element.ParentKey.ParentEntityType, path);
 
             element.PropertyPath = name;
         });

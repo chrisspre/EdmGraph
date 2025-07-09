@@ -2,9 +2,9 @@ namespace EdmGraph.Edm;
 
 public abstract class EdmElement(string Name) : IEdmElement
 {
-    public string? Name { get; } = Name;
+    public string Name { get; } = Name;
 
-    public LineInfo LineInfo { get; internal set; } = new();
+    public LineInfo LineInfo { get; set; } = new();
 
 
     public string? TargetPath => Parent?.TargetPath + TargetPathSegment;

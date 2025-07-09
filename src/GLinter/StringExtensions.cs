@@ -25,16 +25,6 @@ public static class StringExtensions
          }, RegexOptions.IgnoreCase);
 
 
-        static bool IsCamelCase(string s) =>
-            !string.IsNullOrEmpty(s) &&
-            char.IsLower(s[0]) &&
-            s.Skip(1).Any(char.IsUpper);
-
-        static bool IsPascalCase(string s) =>
-            !string.IsNullOrEmpty(s) &&
-            char.IsUpper(s[0]) &&
-            s.Skip(1).Any(char.IsLower);
-
         static bool IsAllUpper(string s) => s == s.ToUpper();
         static bool IsAllLower(string s) => s == s.ToLower();
 
@@ -50,4 +40,15 @@ public static class StringExtensions
         return result;
     }
 
+
+    public static bool IsCamelCase(this string s) => 
+        !string.IsNullOrEmpty(s) &&
+        char.IsLower(s[0]) &&        
+        s.All(char.IsLetterOrDigit);
+       
+
+    public static bool IsPascalCase(this string s) =>
+        !string.IsNullOrEmpty(s) &&
+        char.IsUpper(s[0]) &&
+        s.All(char.IsLetter);
 }

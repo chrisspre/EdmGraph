@@ -4,13 +4,13 @@ namespace EdmGraph.Edm;
 /// Represents an EDM Function Import
 /// </summary>
 public sealed class FunctionImport(string Name, string Function, string? EntitySet = null, bool IncludeInServiceDocument = false) 
-    : IEdmElement, IEdmElementFactory<FunctionImport>
+    : EdmElement(Name), IEdmElementFactory<FunctionImport>
 {
     public string Function { get; } = Function;
     public string? EntitySet { get; } = EntitySet;
     public bool IncludeInServiceDocument { get; } = IncludeInServiceDocument;
 
-    public EntityContainer? ParentEntityContainer { get; internal set; }
+    public EntityContainer ParentEntityContainer { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<Annotation> _annotations = [];
 
@@ -22,19 +22,17 @@ public sealed class FunctionImport(string Name, string Function, string? EntityS
         annotation.ParentElement = this;
     }
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    public LineInfo LineInfo { get; set; } 
+    public override IEdmElement Parent => ParentEntityContainer;
 
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentEntityContainer;
-    string IEdmElement.TargetPathSegment => $"/{Name}";
-   
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", ((IEdmElement)this).TargetPath);
+        yield return ("Name", Name);
         yield return ("Function", Function);
         if (EntitySet != null)
         {

@@ -6,13 +6,12 @@ namespace EdmGraph.Edm;
 public sealed class Singleton(
     string Name,
     string Type,
-    bool Nullable = false) : IEdmElement, IEdmElementFactory<Singleton>
+    bool Nullable = false) : EdmElement(Name), IEdmElementFactory<Singleton>
 {
-    public string Name { get; } = Name;
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
 
-    public EntityContainer? ParentEntityContainer { get; internal set; }
+    public EntityContainer ParentEntityContainer { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     private readonly List<NavigationPropertyBinding> _navigationPropertyBindings = [];
     private readonly List<Annotation> _annotations = [];
@@ -20,17 +19,25 @@ public sealed class Singleton(
     public IReadOnlyCollection<NavigationPropertyBinding> NavigationPropertyBindings => _navigationPropertyBindings;
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    // IEdmElement implementation
-    public string TargetPathSegment => $"/{Name}";
-    public IEdmElement? Parent => ParentEntityContainer;
-    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentEntityContainer;
+
+    public override IReadOnlyCollection<IEdmElement> Children => [
+        .. _navigationPropertyBindings,
+        .. _annotations
+    ];
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+        yield return (nameof(Name), Name);
+        yield return (nameof(Type), Type);
+        yield return (nameof(Nullable), Nullable);
+    }
+
+    #endregion
 
     internal void AddNavigationPropertyBinding(NavigationPropertyBinding binding)
     {
@@ -44,22 +51,6 @@ public sealed class Singleton(
         annotation.ParentElement = this;
     }
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        yield return ("Name", TargetPath);
-        yield return ("Type", Type);
-        yield return ("Nullable", Nullable);
-    }
-
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
-
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
-    }
-
     public static Singleton Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
         var singleton = new Singleton(
@@ -69,14 +60,9 @@ public sealed class Singleton(
             LineInfo = startElement.LineInfo
         };
 
-        // TODO: check if parent is not null
+        if (parent is EntityContainer entityContainer)
         {
-            switch (parent)
-            {
-                case EntityContainer entityContainer:
-                    entityContainer.AddSingleton(singleton);
-                    break;
-            }
+            entityContainer.AddSingleton(singleton);
         }
 
         // TODO: Add deferred action for Type property resolution

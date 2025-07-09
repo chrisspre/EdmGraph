@@ -4,28 +4,22 @@ namespace EdmGraph.Edm;
 /// <summary>
 /// Represents an EDM Navigation Property Binding
 /// </summary>
-public sealed class NavigationPropertyBinding(string Path, string Target) : IEdmElement, IEdmElementFactory<NavigationPropertyBinding>
+public sealed class NavigationPropertyBinding(string Path, string Target) : EdmElement(null!), IEdmElementFactory<NavigationPropertyBinding>
 {
     public string Path { get; } = Path;
     public string Target { get; } = Target;
 
-    public IEdmElement? ParentElement { get; internal set; }
+    public IEdmElement ParentElement { get; internal set; } = default!; // Set in ModelBuilder/Create
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    public LineInfo LineInfo { get; set; }
+    public override IEdmElement Parent => ParentElement;
 
-    string? IEdmElement.Name => "NavigationPropertyBinding";
+    public override IReadOnlyCollection<IEdmElement> Children => [];
 
-    IEdmElement? IEdmElement.Parent => ParentElement;
-    
-    string IEdmElement.TargetPathSegment => "/NavigationPropertyBinding";
+    public override string TargetPathSegment => "/NavigationPropertyBinding";
 
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
-        // NavigationPropertyBinding does not have children
-    ];
-
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Path", Path);
         yield return ("Target", Target);
@@ -39,17 +33,14 @@ public sealed class NavigationPropertyBinding(string Path, string Target) : IEdm
            startElement.Get("Path"),
            startElement.Get("Target"));
 
-        // TODO: check if parent is not null
+        switch (parent)
         {
-            switch (parent)
-            {
-                case EntitySet entitySet:
-                    entitySet.AddNavigationPropertyBinding(navigationPropertyBinding);
-                    break;
-                case Singleton singleton:
-                    singleton.AddNavigationPropertyBinding(navigationPropertyBinding);
-                    break;
-            }
+            case EntitySet entitySet:
+                entitySet.AddNavigationPropertyBinding(navigationPropertyBinding);
+                break;
+            case Singleton singleton:
+                singleton.AddNavigationPropertyBinding(navigationPropertyBinding);
+                break;
         }
 
         // TODO: Add deferred action for Path property resolution (NavigationProperty)

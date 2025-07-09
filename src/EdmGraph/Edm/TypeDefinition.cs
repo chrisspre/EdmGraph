@@ -12,9 +12,8 @@ public sealed class TypeDefinition(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementFactory<TypeDefinition>
+    int? SRID = null) : EdmElement(Name), IEdmElementFactory<TypeDefinition>
 {
-    public string Name { get; } = Name;
     public string UnderlyingType { get; } = UnderlyingType;
     public int? MaxLength { get; } = MaxLength;
     public bool Unicode { get; } = Unicode;
@@ -25,52 +24,45 @@ public sealed class TypeDefinition(
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public Schema? ParentSchema { get; internal set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
     
-    // IEdmElement implementation
-    public string TargetPathSegment => $".{Name}";
-    public IEdmElement? Parent => ParentSchema;
-    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
-    {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
+    #region EdmElement abstract member implementation
 
-    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
+    public override IEdmElement Parent => ParentSchema;
 
-    public IEnumerable<(string, object?)> GetBasicProperties()
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        yield return ("Name", TargetPath);
-        yield return ("UnderlyingType", UnderlyingType);
+        yield return (nameof(Name), Name);
+        yield return (nameof(UnderlyingType), UnderlyingType);
         if (MaxLength.HasValue)
         {
-            yield return ("MaxLength", MaxLength.Value);
+            yield return (nameof(MaxLength), MaxLength.Value);
         }
-        yield return ("Unicode", Unicode);
+        yield return (nameof(Unicode), Unicode);
         if (Precision.HasValue)
         {
-            yield return ("Precision", Precision.Value);
+            yield return (nameof(Precision), Precision.Value);
         }
         if (Scale != null)
         {
-            yield return ("Scale", Scale);
+            yield return (nameof(Scale), Scale);
         }
         if (SRID.HasValue)
         {
-            yield return ("SRID", SRID.Value);
+            yield return (nameof(SRID), SRID.Value);
         }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
+    #endregion
 
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    internal void AddAnnotation(Annotation annotation)
+    {
+        _annotations.Add(annotation);
+        annotation.ParentElement = this;
     }
 
     public static TypeDefinition Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
@@ -88,17 +80,13 @@ public sealed class TypeDefinition(
             LineInfo = startElement.LineInfo
         };
 
-        // TODO: check if parent is not null
+        if (parent is Schema schema)
         {
-            switch (parent)
-            {
-                case Schema schema:
-                    schema.AddTypeDefinition(typeDefinition);
-                    break;
-                default:
-                    Log.Error("TypeDefinition {Name} can not be added to {parent}.", typeDefinition.Name, parent);
-                    break;
-            }
+            schema.AddTypeDefinition(typeDefinition);
+        }
+        else
+        {
+            Log.Error("TypeDefinition {Name} can not be added to {parent}.", typeDefinition.Name, parent);
         }
 
         // TODO: Add deferred action for UnderlyingType property resolution

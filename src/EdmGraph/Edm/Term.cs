@@ -14,9 +14,8 @@ public sealed class Term(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementFactory<Term>
+    int? SRID = null) : EdmElement(Name), IEdmElementFactory<Term>
 {
-    public string Name { get; } = Name;
     public string Type { get; } = Type;
     public string? BaseTerm { get; } = BaseTerm;
     public string? AppliesTo { get; } = AppliesTo;
@@ -31,65 +30,58 @@ public sealed class Term(
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public Schema? ParentSchema { get; internal set; }
+    public Schema ParentSchema { get; internal set; } = default!; // Set in ModelBuilder/Create
 
-    // IEdmElement implementation
-    public string TargetPathSegment => $".{Name}";
-    public IEdmElement? Parent => ParentSchema;
-    public IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
-    public LineInfo LineInfo { get; set; }
-    
-    public string TargetPath => Parent switch
+    #region EdmElement abstract member implementation
+
+    public override IEdmElement Parent => ParentSchema;
+
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => $".{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        null => Name,
-        _ => Parent.TargetPath + TargetPathSegment
-    };
-
-    internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
-
-    public IEnumerable<(string, object?)> GetBasicProperties()
-    {
-        yield return ("Name", TargetPath);
-        yield return ("Type", Type);
+        yield return (nameof(Name), Name);
+        yield return (nameof(Type), Type);
         if (BaseTerm != null)
         {
-            yield return ("BaseTerm", BaseTerm);
+            yield return (nameof(BaseTerm), BaseTerm);
         }
         if (AppliesTo != null)
         {
-            yield return ("AppliesTo", AppliesTo);
+            yield return (nameof(AppliesTo), AppliesTo);
         }
         if (DefaultValue != null)
         {
-            yield return ("DefaultValue", DefaultValue);
+            yield return (nameof(DefaultValue), DefaultValue);
         }
-        yield return ("Nullable", Nullable);
+        yield return (nameof(Nullable), Nullable);
         if (MaxLength.HasValue)
         {
-            yield return ("MaxLength", MaxLength.Value);
+            yield return (nameof(MaxLength), MaxLength.Value);
         }
-        yield return ("Unicode", Unicode);
+        yield return (nameof(Unicode), Unicode);
         if (Precision.HasValue)
         {
-            yield return ("Precision", Precision.Value);
+            yield return (nameof(Precision), Precision.Value);
         }
         if (Scale != null)
         {
-            yield return ("Scale", Scale);
+            yield return (nameof(Scale), Scale);
         }
         if (SRID.HasValue)
         {
-            yield return ("SRID", SRID.Value);
+            yield return (nameof(SRID), SRID.Value);
         }
     }
 
-    public override string ToString()
-    {
-        var properties = GetBasicProperties()
-            .Select(p => $"{p.Item1}: {p.Item2}")
-            .ToArray();
+    #endregion
 
-        return $"{GetType().Name} {{ {string.Join(", ", properties)} }}";
+    internal void AddAnnotation(Annotation annotation)
+    {
+        _annotations.Add(annotation);
+        annotation.ParentElement = this;
     }
 
     public static Term Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
@@ -100,7 +92,10 @@ public sealed class Term(
             startElement.Get("BaseTerm", null),
             startElement.Get("AppliesTo", null),
             startElement.Get("DefaultValue", null),
-            startElement.Parse<bool>("Nullable", true));
+            startElement.Parse<bool>("Nullable", true))
+        {
+            LineInfo = startElement.LineInfo
+        };
 
         if (parent is Schema schema)
         {

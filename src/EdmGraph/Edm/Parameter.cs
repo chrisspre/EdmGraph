@@ -27,7 +27,7 @@ public sealed class Parameter(string Name) : EdmElement(Name), IEdmElementFactor
 
     public override IEdmElement Parent => ParentElement;
 
-    public override IReadOnlyCollection<IEdmElement> Children => _annotations.Cast<IEdmElement>().ToList();
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
 
     public override string TargetPathSegment => $"/{Name}";
 

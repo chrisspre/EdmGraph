@@ -9,7 +9,7 @@ namespace EdmGraph.Edm;
 public sealed class NavigationProperty(
     string Name,
     bool? Nullable = default,
-    bool ContainsTarget = false) : IEdmElement, IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<NavigationProperty>
+    bool ContainsTarget = false) : EdmElement(Name), IEntityTypeChildElement, IComplexTypeChildElement, IProperty, IEdmElementFactory<NavigationProperty>
 {
     private readonly List<ReferentialConstraint> _referentialConstraints = [];
     private readonly List<Annotation> _annotations = [];
@@ -17,7 +17,7 @@ public sealed class NavigationProperty(
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
     public OnDelete? OnDelete { get; private set; }
     
-    public IEdmElement? ParentElement { get; internal set; }
+    public IEdmElement ParentElement { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddReferentialConstraint(ReferentialConstraint constraint) 
     {
@@ -42,18 +42,17 @@ public sealed class NavigationProperty(
     public bool ContainsTarget { get; } = ContainsTarget;
     IEdmPropertyType IProperty.Type => Type;
 
-    #region IEdmElement
-    public LineInfo LineInfo { get; set; }
-    string? IEdmElement.Name => Name;
-    IEdmElement? IEdmElement.Parent => ParentElement;
-    string IEdmElement.TargetPathSegment => $"/{Name}";
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
-        .. _annotations,
-        .. _referentialConstraints,
-        .. OnDelete is not null ? [OnDelete] : Enumerable.Empty<IEdmElement>()
-    ];
+    #region EdmElement abstract member implementation
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IEdmElement Parent => ParentElement;
+
+    public override IReadOnlyCollection<IEdmElement> Children => OnDelete is not null 
+        ? [.. _annotations, .. _referentialConstraints, OnDelete]
+        : [.. _annotations, .. _referentialConstraints];
+
+    public override string TargetPathSegment => $"/{Name}";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Name", Name);
         yield return ("Nullable", Nullable);
@@ -67,19 +66,16 @@ public sealed class NavigationProperty(
         var navigationProperty = new NavigationProperty(
             startElement.Get("Name"),
             startElement.ParseNullable<bool>("Nullable"),
-            startElement.Parse<bool>("ContainsTarget", false))       ;
+            startElement.Parse<bool>("ContainsTarget", false));
 
-        // TODO: check if parent is not null
+        switch (parent)
         {
-            switch (parent)
-            {
-                case EntityType entityType:
-                    entityType.AddNavigationProperty(navigationProperty);
-                    break;
-                case ComplexType complexType:
-                    complexType.AddNavigationProperty(navigationProperty);
-                    break;
-            }
+            case EntityType entityType:
+                entityType.AddNavigationProperty(navigationProperty);
+                break;
+            case ComplexType complexType:
+                complexType.AddNavigationProperty(navigationProperty);
+                break;
         }
 
         // Add deferred action for Type property resolution
@@ -123,34 +119,39 @@ public sealed class NavigationProperty(
 /// <summary>
 /// Represents a Referential Constraint on a Navigation Property
 /// </summary>
-public sealed class ReferentialConstraint() : IEdmElement, IEdmElementFactory<ReferentialConstraint>
+public sealed class ReferentialConstraint(string Property, string ReferencedProperty) : EdmElement("ReferentialConstraint"), IEdmElementFactory<ReferentialConstraint>
 {
+    public string Property { get; } = Property;
+    public string ReferencedProperty { get; } = ReferencedProperty;
+
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public NavigationProperty? ParentNavigationProperty { get; internal set; }
+    public NavigationProperty ParentNavigationProperty { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    string? IEdmElement.Name => "ReferentialConstraint";
-    IEdmElement? IEdmElement.Parent => ParentNavigationProperty;
-    string IEdmElement.TargetPathSegment => "/ReferentialConstraint";
-    LineInfo IEdmElement.LineInfo  { get; set; } 
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+    public override IEdmElement Parent => ParentNavigationProperty;
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => "/ReferentialConstraint";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
-        // ReferentialConstraint doesn't have additional basic properties beyond its name
-        yield break;
+        yield return (nameof(Property), Property);
+        yield return (nameof(ReferencedProperty), ReferencedProperty);
     }
 
     #endregion
 
     public static ReferentialConstraint Create(CsdlToken.StartElement startElement, IEdmElement parent, DeferredActionRegistry actions)
     {
-        var referentialConstraint = new ReferentialConstraint();
+        var referentialConstraint = new ReferentialConstraint(
+            startElement.Get("Property"),
+            startElement.Get("ReferencedProperty"));
 
         if (parent is NavigationProperty navigationProperty)
         {
@@ -164,27 +165,26 @@ public sealed class ReferentialConstraint() : IEdmElement, IEdmElementFactory<Re
 /// <summary>
 /// Represents an On-Delete Action for a Navigation Property
 /// </summary>
-public sealed class OnDelete(string Action) : IEdmElement, IEdmElementFactory<OnDelete>
+public sealed class OnDelete(string Action) : EdmElement("OnDelete"), IEdmElementFactory<OnDelete>
 {
     private readonly List<Annotation> _annotations = [];
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
-    public NavigationProperty? ParentNavigationProperty { get; internal set; }
+    public NavigationProperty ParentNavigationProperty { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     public string Action { get; } = Action;
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    string? IEdmElement.Name => "OnDelete";
-    IEdmElement? IEdmElement.Parent => ParentNavigationProperty;
-    string IEdmElement.TargetPathSegment => "/OnDelete";
-    LineInfo IEdmElement.LineInfo { get; set; } 
-   
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [.. _annotations];
+    public override IEdmElement Parent => ParentNavigationProperty;
 
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
+
+    public override string TargetPathSegment => "/OnDelete";
+
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Action", Action);
     }

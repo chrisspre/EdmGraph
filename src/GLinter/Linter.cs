@@ -1,4 +1,5 @@
 namespace GLinter;
+
 using EdmGraph;
 using EdmGraph.Edm;
 
@@ -13,14 +14,16 @@ public static class Linter
 {
     // Define the rules with their metadata
     public static readonly List<LintingRuleInfo> Rules = [
-        // Rule<EnumType>("GL0001", LintingRules.FlagsEnumValuesMustBeAPowerOfTwo),
-        // Rule<EntityType>("GL0002", LintingRules.DoNotUseOpenTypes),
-        // Rule<ComplexType>("GL0003", LintingRules.DoNotUseOpenTypes),
-        // Rule<Property>("GL0004", LintingRules.CollectionsShouldNotBeNullable),
-        // Rule<Property>("GL0005", LintingRules.PropertyTypeShouldNotBeANullableEnum),
-        // Rule<Property>("GL0006", LintingRules.UseCreatedInsteadOfCreateOrCreation),
-        // Rule<Property>("GL0007", LintingRules.UseModifiedInsteadOfChangedOrUpdated),
-        Rule<Property>("GL0008", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
+        Rule<EnumType>("GL0001", LintingRules.FlagsEnumValuesMustBeAPowerOfTwo),
+        Rule<Property>("GL0002", LintingRules.CollectionsShouldNotBeNullable),
+        Rule<Property>("GL0003", LintingRules.PropertyTypeShouldNotBeANullableEnum),
+        Rule<Property>("GL0004", LintingRules.UseCreatedInsteadOfCreateOrCreation),
+        Rule<Property>("GL0005", LintingRules.UseModifiedInsteadOfChangedOrUpdated),
+        Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
+        Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
+        Rule<EntityType>("GL0007", LintingRules.DoNotUseOpenTypes),
+        Rule<ComplexType>("GL0008", LintingRules.DoNotUseOpenTypes),
+        Rule("GL0009", LintingRules.NameMustBeCamelCase),
     ];
 
     // Factory method for rule creation
@@ -29,16 +32,24 @@ public static class Linter
     {
         return new(id, element => element is T typedElement ? rule(typedElement) : []);
     }
-    
+
+
+    private static LintingRuleInfo Rule(string id, LintingRule<IEdmElement> rule) 
+    {
+        return rule is LintingRule<IEdmElement> typedRule
+            ? new LintingRuleInfo(id, element => typedRule(element))
+            : throw new ArgumentException("Rule must be of type LintingRule<IEdmElement>.");
+    }
+
     // Method to run rules for all elements in a data services model
-    public static IEnumerable<(string,string, IEdmElement)> RunRules(DataServices dataServices)
+    public static IEnumerable<(string, string, IEdmElement)> RunRules(DataServices dataServices)
     {
         // Traverse all elements in the model
         var allElements = TraverseElements(dataServices);
 
         foreach (var element in allElements)
         {
-            foreach (var (id,message) in RunRulesSingleElement(element))
+            foreach (var (id, message) in RunRulesSingleElement(element))
             {
                 yield return (id, message, element);
             }

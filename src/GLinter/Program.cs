@@ -6,35 +6,38 @@ using Serilog;
 class Program
 {
 
-    static void Main()
+    static void Main(string[] args)
     {
-        string[] paths = [
-            @"..\..\data\example89.xml",
-            // @"..\..\data\microsoft-graph.xml",
-            @"..\..\data\reporting-line.xml",
-        ];
-
-        foreach (var path in paths)
+        if (args.Length == 0)
         {
-            var load = Operation.Begin($"LoadModel {path}");
-            var model = ModelBuilder.FromFile(path);
-            load.Complete();
-
-            var linting = Operation.Begin($"linting {Path.GetFileNameWithoutExtension(path)}");
-            foreach (var (id, error, element) in Linter.RunRules(model))
-            {
-                Log.Warning("{id} {error} {path}{lineInfo}", id, error, path, element.LineInfo);
-            }
-            linting.Complete();
-
-
-            // using (var logFile = new StreamWriter("logs/tree.log"))
-            // {
-            //     model.WriteAsciiTree(logFile);
-            //     Log.Information("Tree written to {Name}", ((FileStream)logFile.BaseStream).Name);
-            // }
-
+            Log.Error("Please provide a file path of a CSDL XML file as a command line argument.");
+            return;
         }
+
+        var path = args[0];
+
+        if (!File.Exists(path))
+        {
+            Log.Error("File not found: {Path}", path);
+            return;
+        }
+        var load = Operation.Begin($"LoadModel {path}");
+        var model = ModelBuilder.FromFile(path);
+        load.Complete();
+
+        var linting = Operation.Begin($"linting {Path.GetFileNameWithoutExtension(path)}");
+        foreach (var (id, error, element) in Linter.RunRules(model))
+        {
+            Log.Warning("{id} {error} {path}{lineInfo}", id, error, path, element.LineInfo);
+        }
+        linting.Complete();
+
+
+        // using (var logFile = new StreamWriter("logs/tree.log"))
+        // {
+        //     model.WriteAsciiTree(logFile);
+        //     Log.Information("Tree written to {Name}", ((FileStream)logFile.BaseStream).Name);
+        // }
     }
 
     static Program()

@@ -10,7 +10,7 @@ public sealed class ReturnType(
     bool Unicode = true,
     int? Precision = null,
     string? Scale = null,
-    int? SRID = null) : IEdmElement, IEdmElementFactory<ReturnType>
+    int? SRID = null) : EdmElement("ReturnType"), IEdmElementFactory<ReturnType>
 {
     public string Type { get; } = Type;
     public bool Nullable { get; } = Nullable;
@@ -24,25 +24,19 @@ public sealed class ReturnType(
 
     public IReadOnlyCollection<Annotation> Annotations => _annotations;
 
-    public IEdmElement? ParentElement { get; internal set; }
+    public IEdmElement ParentElement { get; internal set; } = default!; // Set in ModelBuilder/Create
 
     internal void AddAnnotation(Annotation annotation) => _annotations.Add(annotation);
 
-    #region IEdmElement
+    #region EdmElement abstract member implementation
 
-    public LineInfo LineInfo { get; set; }
+    public override IEdmElement Parent => ParentElement;
 
-    string? IEdmElement.Name => "ReturnType";
+    public override IReadOnlyCollection<IEdmElement> Children => [.. _annotations];
 
-    IEdmElement? IEdmElement.Parent => ParentElement;
+    public override string TargetPathSegment => "/ReturnType";
 
-    string IEdmElement.TargetPathSegment => "/ReturnType";
-
-    IReadOnlyCollection<IEdmElement> IEdmElement.Children => [
-        .. _annotations,
-    ];
-
-    IEnumerable<(string, object?)> IEdmElement.GetBasicProperties()
+    public override IEnumerable<(string, object?)> GetBasicProperties()
     {
         yield return ("Type", Type);
         yield return ("Nullable", Nullable);
