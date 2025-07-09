@@ -14,15 +14,17 @@ public static class Linter
 {
     // Define the rules with their metadata
     public static readonly List<LintingRuleInfo> Rules = [
-        Rule<EnumType>("GL0001", LintingRules.FlagsEnumValuesMustBeAPowerOfTwo),
-        Rule<Property>("GL0002", LintingRules.CollectionsShouldNotBeNullable),
-        Rule<Property>("GL0003", LintingRules.PropertyTypeShouldNotBeANullableEnum),
+        Rule<Property>("GL0001", LintingRules.CollectionsShouldNotBeNullable),
+        Rule<Property>("GL0002", LintingRules.PropertyTypeShouldNotBeANullableEnum),
+        Rule<EnumType>("GL0003", LintingRules.FlagsEnumValuesMustBeAPowerOfTwo),
         Rule<Property>("GL0004", LintingRules.UseCreatedInsteadOfCreateOrCreation),
         Rule<Property>("GL0005", LintingRules.UseModifiedInsteadOfChangedOrUpdated),
         Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
         Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
         Rule<EntityType>("GL0007", LintingRules.DoNotUseOpenTypes),
         Rule<ComplexType>("GL0008", LintingRules.DoNotUseOpenTypes),
+        
+        // This rule is not type-specific and applies to all IEdmElement types, filtering by type in the rule's function
         Rule("GL0009", LintingRules.NameMustBeCamelCase),
     ];
 
