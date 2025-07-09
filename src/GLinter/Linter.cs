@@ -20,13 +20,13 @@ public static class Linter
         Rule<Property>("GL0004", LintingRules.UseCreatedInsteadOfCreateOrCreation),
         Rule<Property>("GL0005", LintingRules.UseModifiedInsteadOfChangedOrUpdated),
         Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
-        Rule<Property>("GL0006", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
-        Rule<EntityType>("GL0007", LintingRules.DoNotUseOpenTypes),
-        Rule<ComplexType>("GL0008", LintingRules.DoNotUseOpenTypes),
-        Rule<EntityType>("GL0009", LintingRules.EntityTypesInheritingKeysFromBaseTypeMustNotHaveKeys),
+        Rule<Property>("GL0007", LintingRules.PropertyNameShouldNotHaveATypeNamePrefix),
+        Rule<EntityType>("GL0008", LintingRules.DoNotUseOpenTypes),
+        Rule<ComplexType>("GL0009", LintingRules.DoNotUseOpenTypes),
+        Rule<EntityType>("GL0010", LintingRules.EntityTypesInheritingKeysFromBaseTypeMustNotHaveKeys),
         
         // This rule is not type-specific and applies to all IEdmElement types, filtering by type in the rule's function
-        Rule("GL0009", LintingRules.NameMustBeCamelCase),
+        Rule("GL0011", LintingRules.NameMustBeCamelCase),
     ];
 
 

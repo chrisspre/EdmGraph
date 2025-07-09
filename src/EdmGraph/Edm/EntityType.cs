@@ -161,11 +161,13 @@ public sealed class PropertyRef(string? Alias = null) : EdmElement("PropertyRef"
 
     #region EdmElement abstract member implementation
 
+    public new string Name => PropertyPath.Last().Name;
+
     public override IEdmElement Parent => ParentKey;
 
     public override IReadOnlyCollection<IEdmElement> Children => [];
 
-    public override string TargetPathSegment => $"/{Name}";
+    public override string TargetPathSegment => null!; // PropertyRef does not have a target path segment
 
     public override IEnumerable<(string, object?)> GetBasicProperties()
     {

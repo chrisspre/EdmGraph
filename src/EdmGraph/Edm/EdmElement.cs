@@ -6,7 +6,6 @@ public abstract class EdmElement(string Name) : IEdmElement
 
     public LineInfo LineInfo { get; set; } = new();
 
-
     public string? TargetPath => Parent?.TargetPath + TargetPathSegment;
 
     public override string ToString() =>

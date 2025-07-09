@@ -108,12 +108,13 @@ public static class LintingRules
         if (type.BaseType == null ){
             yield break; // No base type, nothing to check
         }
-        var baseTypeKeys = type.BaseType.Key?.PropertyRefs.Select(pr => pr.Name) ?? Enumerable.Empty<string>();
-        var ownKeys = type.Key?.PropertyRefs.Select(pr => pr.Name) ?? Enumerable.Empty<string>();
 
-        if( baseTypeKeys.Any() && ownKeys.Any() )
+        var ownKeys = type.Key?.PropertyRefs.Select(pr => pr.Name) ?? [];
+        var inheritedKeys = type.BaseType.Key?.PropertyRefs.Select(pr => pr.Name) ?? [];
+
+        if( inheritedKeys.Any() && ownKeys.Any() )
         {   
-            yield return $"Entity type '{type.Name}' inherits keys from base type '{type.BaseType.Name}' and must not have its own keys.";
+            yield return $"Entity type '{type.Name}' inherits keys from base type '{type.BaseType.Name}' ({string.Join(",", inheritedKeys)}) and must not have its own keys ({string.Join(",", ownKeys)}).";
         }
     }
 }

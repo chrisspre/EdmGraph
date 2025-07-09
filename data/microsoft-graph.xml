@@ -50109,6 +50109,9 @@
                 <Property Name="name" Type="Edm.String" />
             </ComplexType>
             <EntityType Name="group" BaseType="graph.entity">
+                <Key>
+                    <PropertyRef Name="displayName" />
+                </Key>
                 <Property Name="createdDateTime" Type="Edm.DateTimeOffset" />
                 <Property Name="description" Type="Edm.String" />
                 <Property Name="displayName" Type="Edm.String" />
